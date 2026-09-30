@@ -1,6 +1,0 @@
-{
-  "routes": [
-    { "path": "/", "title": "CipherVault — الخزنة المحلية" },
-    { "path": "/vault.html", "title": "CipherVault — الخزنة المحلية" }
-  ]
-}
