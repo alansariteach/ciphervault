@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ciphervault-shell-v18';
+const CACHE_NAME = 'ciphervault-shell-v19';
 const APP_SHELL = [
   '/', '/index.html', '/vault.html', '/manifest.webmanifest',
   '/styles.css', '/vault.css', '/password-check.css', '/password-visibility.css', '/local-vault.css',

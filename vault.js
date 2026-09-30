@@ -433,8 +433,12 @@ importForm.addEventListener('submit', restoreBackup);
 lockVaultButton.addEventListener('click', lockVault);
 document.addEventListener('ciphervault:languagechange', () => { if (vaultKey) renderEntries(); });
 window.addEventListener('message', (event) => {
-  if (event.origin !== window.location.origin || event.source !== window.parent || event.data?.type !== 'ciphervault:unlock' || !(event.data.key instanceof CryptoKey)) return;
-  loadVault(event.data.key).catch(() => lockVault());
+  if (event.origin !== window.location.origin || event.source !== window.parent || event.data?.type !== 'ciphervault:unlock') return;
+  const key = event.data.key;
+  // Structured-cloned CryptoKeys can have a different realm constructor on Android.
+  // Avoid instanceof here; Web Crypto will reject an invalid value during decrypt.
+  if (!key || typeof key !== 'object' || typeof key.algorithm !== 'object' || typeof key.usages?.includes !== 'function') return;
+  loadVault(key).catch(() => lockVault());
 });
 window.addEventListener('resize', () => { window.clearTimeout(resizeTimer); resizeTimer = window.setTimeout(buildVaultRain, 160); });
 
