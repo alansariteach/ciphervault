@@ -36,7 +36,7 @@ window.CipherVaultPWA = { triggerInstall };
 
 if ('serviceWorker' in navigator && !isEmbeddedVault) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/service-worker.js').catch(() => {
+    navigator.serviceWorker.register('./service-worker.js').catch(() => {
       // Installation remains available through the browser even if offline caching is unavailable.
     });
   });
