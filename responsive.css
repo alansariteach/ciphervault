@@ -1,0 +1,118 @@
+/* Cross-device layout refinements: Android, iOS safe areas, tablet and desktop */
+html { min-height: 100%; background: #030303; }
+body { width: 100%; overflow-x: hidden; }
+.redlock-page, .vault-page { min-height: 100dvh; }
+
+@supports (padding: max(0px)) {
+  .site-header { padding-top: max(17px, calc(17px + env(safe-area-inset-top))); }
+  .vault-header { padding-top: max(16px, calc(16px + env(safe-area-inset-top))); }
+  .access-main { padding-bottom: max(76px, calc(76px + env(safe-area-inset-bottom))); }
+  .site-footer { padding-bottom: max(15px, calc(15px + env(safe-area-inset-bottom))); }
+  .vault-main { padding-bottom: max(65px, calc(65px + env(safe-area-inset-bottom))); }
+  .vault-footer { padding-bottom: max(16px, calc(16px + env(safe-area-inset-bottom))); }
+  .account-modal { padding-top: max(20px, calc(20px + env(safe-area-inset-top))); padding-bottom: max(20px, calc(20px + env(safe-area-inset-bottom))); }
+}
+
+.account-modal .modal-card { max-height: calc(100dvh - 40px); overflow-y: auto; overscroll-behavior: contain; }
+.password-check-card { scrollbar-width: thin; }
+
+@media (max-width: 410px) {
+  .site-header { padding-inline: 16px; }
+  .header-alansari, .header-alansari img { width: 92px; height: 38px; }
+  .menu-toggle { width: 43px; height: 39px; }
+  .access-main { padding-inline: 16px; padding-top: 93px; }
+  .access-core h1 { font-size: clamp(32px, 9.8vw, 42px); letter-spacing: 1px; }
+  .hero-biohazard { width: 96px; height: 96px; }
+  .security-description { font-size: 11px; }
+  .vault-header { min-height: 70px; padding-inline: 16px; }
+  .vault-alansari, .vault-alansari img { width: 86px; height: 35px; }
+  .vault-identity { font-size: 10px; letter-spacing: .08em; }
+  .vault-identity small { font-size: 8px; }
+  .vault-menu-toggle { left: 16px; min-width: 44px; min-height: 44px; }
+  .vault-main { width: min(100% - 28px, 560px); padding-top: 35px; }
+  .vault-heading { gap: 18px; padding-bottom: 24px; }
+  .vault-heading h1 { font-size: clamp(37px, 11.6vw, 43px); line-height: 1.08; }
+  .vault-heading > div:first-child > p:last-child { font-size: 12px; }
+  .vault-status { flex-wrap: wrap; }
+  .vault-status button { min-height: 44px; }
+  .vault-search input { min-height: 52px; font-size: 11px; }
+  .vault-control-actions { gap: 8px; }
+  .vault-ghost, .vault-check, .vault-add { min-height: 46px; height: 46px; font-size: 9px; }
+  .vault-card { min-height: 106px; }
+  .card-site h2 { font-size: 14px; }
+  .secret-dots { font-size: 15px; }
+}
+
+@media (min-width: 411px) and (max-width: 767px) {
+  .access-main { min-height: 100dvh; }
+  .vault-main { width: min(100% - 36px, 600px); }
+  .vault-ghost, .vault-check, .vault-add { min-height: 46px; }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .site-header { padding-inline: 36px; }
+  .access-main { padding-top: 108px; }
+  .vault-header { padding-inline: 36px; }
+  .vault-main { width: min(100% - 64px, 900px); padding-top: 62px; }
+  .vault-controls { align-items: center; }
+  .vault-control-actions { flex-wrap: wrap; justify-content: flex-end; }
+  .vault-ghost, .vault-check, .vault-add { min-height: 44px; }
+}
+
+@media (min-width: 1200px) {
+  .site-header { padding-top: 28px; }
+  .access-main { padding-top: 126px; padding-bottom: 92px; }
+  .vault-header { padding-top: 25px; padding-bottom: 25px; }
+  .vault-main { padding-top: 78px; padding-bottom: 112px; }
+  .vault-card { min-height: 98px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vault-stream, .binary-stream, .side-orbit { animation: none !important; }
+}
+
+/* Phone access screen: start under the fixed header, not in vertical centre. */
+@media (max-width: 767px) {
+  .site-header {
+    padding-top: 4px;
+  }
+
+  .redlock-page {
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  .access-main {
+    min-height: 0;
+    place-items: start center;
+    align-content: start;
+    padding: 64px 16px 22px;
+  }
+
+  .access-code { font-size: 9px; }
+
+  .hero-biohazard {
+    width: 92px;
+    height: 92px;
+    margin: 7px auto 4px;
+  }
+
+  .signal-rule { margin: 6px auto 10px; }
+  .access-core h1 { font-size: clamp(34px, 9.4vw, 40px); line-height: 1; }
+  .access-mode-note { min-height: 0; margin: 0 0 5px; font-size: 10px; line-height: 1.65; }
+  .unlock-form { gap: 6px; }
+  .setup-field { gap: 5px; margin-top: 4px; }
+  .unlock-form label { font-size: 10px; }
+  .password-control input { height: 54px; }
+  .visibility-toggle { width: 39px; height: 39px; }
+  .unlock-button { height: 52px; }
+  .security-description { margin: 18px auto 8px; font-size: 11px; line-height: 1.7; }
+  .security-meta { font-size: 8px; gap: 7px; }
+
+  .site-footer { margin-top: 0; padding-top: 10px; }
+}
+
+/* Keep installed PWA chrome clear of the device status bar without affecting the embedded preview. */
+@media (display-mode: standalone) and (max-width: 767px) {
+  .site-header { padding-top: max(4px, calc(4px + env(safe-area-inset-top))); }
+}
