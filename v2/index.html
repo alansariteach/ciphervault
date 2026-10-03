@@ -51,7 +51,9 @@ a{color:inherit;text-decoration:none}
 .menu-toggle{width:46px;height:46px;display:flex;flex-direction:column;align-items:center;
   justify-content:center;gap:5px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
 .menu-toggle span{width:18px;height:2px;background:var(--txt);border-radius:2px;transition:.25s var(--ease)}
-.header-alansari img{height:34px;width:auto;opacity:.95}
+.header-alansari,.header-alansari img{height:67px;width:auto;opacity:.95}
+@media (min-width:481px){.header-alansari,.header-alansari img{height:80px;width:auto;opacity:.95}}
+@media (min-width:901px){.header-alansari,.header-alansari img{height:96px;width:auto;opacity:.95}}
 .header-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.22em;color:var(--muted2);
   text-transform:uppercase;text-align:center;margin:6px 0 2px}
 
@@ -316,10 +318,10 @@ a{color:inherit;text-decoration:none}
     <header class="site-header">
       <button id="menu-toggle2" class="menu-toggle" type="button" aria-expanded="false" aria-controls="drawer" data-i18n-aria="menuOpen"><span></span><span></span><span></span></button>
       <p class="header-eyebrow" data-i18n="vaultEyebrow">LOCAL / ENCRYPTED</p>
-      <img src="assets/alansari-tech-logo-red-white.png" alt="Alansari.Tech" style="height:34px;width:auto" />
-    </header>
+      <img src="assets/alansari-tech-logo-red-white.png" alt="Alansari.Tech" class="header-alansari" />
+          </header>
 
-    <div class="vault-top">
+          <div class="vault-top">
       <h1 data-i18n="myVault">خزنتي</h1>
       <div class="search-wrap">
         <span class="search-ico">⌕</span>
@@ -341,10 +343,10 @@ a{color:inherit;text-decoration:none}
     <header class="site-header">
       <button id="menu-toggle3" class="menu-toggle" type="button" aria-expanded="false" aria-controls="drawer" data-i18n-aria="menuOpen"><span></span><span></span><span></span></button>
       <p class="header-eyebrow">PASSWORD CHECK</p>
-      <img src="assets/alansari-tech-logo-red-white.png" alt="Alansari.Tech" style="height:34px;width:auto" />
-    </header>
+      <img src="assets/alansari-tech-logo-red-white.png" alt="Alansari.Tech" class="header-alansari" />
+          </header>
 
-    <div class="back-row">
+          <div class="back-row">
       <button class="btn btn--icon" id="btn-back-check" data-i18n-aria="back" aria-label="رجوع">←</button>
       <h1 style="font-size:20px" data-i18n="checkPw">فحص كلمة المرور</h1>
     </div>
