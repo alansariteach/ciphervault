@@ -226,10 +226,14 @@ a{color:inherit;text-decoration:none}
 .eye-outside:hover{color:var(--txt)}
 .eye-outside svg{width:22px;height:22px}
 .check-back{position:fixed;top:calc(env(safe-area-inset-top,0px) + 96px);inset-inline-end:18px;
-  width:46px;height:46px;z-index:6;display:flex;align-items:center;justify-content:center;
-  color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:12px;cursor:pointer}
-.check-back:hover{color:var(--txt)}
-.check-back svg{width:22px;height:22px}
+  display:inline-flex;align-items:center;gap:8px;z-index:6;cursor:pointer;
+  background:var(--panel);border:1px solid var(--line);border-radius:12px;
+  padding:10px 16px;font-size:14px;color:var(--muted)}
+.check-back::before{content:"";width:0;height:0;border-top:6px solid transparent;
+  border-bottom:6px solid transparent;border-right:9px solid var(--red-soft)}
+[dir="ltr"] .check-back::before{content:"";width:0;height:0;border-top:6px solid transparent;
+  border-bottom:6px solid transparent;border-left:9px solid var(--red-soft)}
+.check-back:hover{color:var(--txt);border-color:rgba(229,10,30,.35)}
 .strength-bar{display:flex;gap:6px;margin-top:16px}
 .strength-bar .seg{flex:1;height:6px;border-radius:4px;background:rgba(255,255,255,.08);transition:background .3s}
 .strength-bar .seg.weak{background:var(--red)}
@@ -384,7 +388,7 @@ a{color:inherit;text-decoration:none}
         <img src="assets/alansari-tech-logo-red-white.png" alt="Alansari.Tech" class="header-alansari" />
       </header>
 
-      <button class="check-back" id="btn-back-check" data-i18n-aria="back" aria-label="رجوع"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 12L9 12M9 9L4 4"/><path d="M9 12L4 7"/></svg></button>
+      <button class="check-back" id="btn-back-check" data-i18n="back">الرجوع</button>
 
       <div class="check-main">
         <div class="check-card">
@@ -470,7 +474,8 @@ const I18N = {
     lockDesc:"بسبب عدة محاولات خاطئة، تم قفل الخزنة لمدة 15 دقيقة. حاول مرة أخرى لاحقا.",
     footerTag:"AES-256 / محلي فقط · ٣ محاولات كحد أقصى",
     footerDate:"تاريخ تصميم الموقع: 2026-10-03",
-    footerBy:"صمم بواسطة Alansari.Tech",
+        footerBy:"صمم بواسطة Alansari.Tech",
+        back:"الرجوع",
     myVault:"خزنتي", searchPh:"بحث في الحسابات...",
     addAccount:"+ إضافة حساب", checkPw:"فحص كلمة المرور",
     checkTitle:"فحص كلمة المرور",
@@ -531,7 +536,8 @@ const I18N = {
     lockDesc:"Too many wrong attempts. The vault is locked for 15 minutes. Try again later.",
     footerTag:"AES-256 / Local only · Max 3 attempts",
     footerDate:"Site designed on: 2026-10-03",
-    footerBy:"Designed by Alansari.Tech",
+        footerBy:"Designed by Alansari.Tech",
+        back:"Back",
     myVault:"My Vault", searchPh:"Search accounts...",
     addAccount:"+ Add Account", checkPw:"Password Check",
     checkTitle:"Password Check",
