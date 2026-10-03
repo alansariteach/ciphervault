@@ -50,7 +50,15 @@ a{color:inherit;text-decoration:none}
   padding:calc(env(safe-area-inset-top,0px) + 12px) 18px 8px;position:relative;z-index:5}
 .site-header .header-alansari{flex-shrink:0}
 /* access screen: header pinned full-bleed to viewport corners */
-.screen[data-screen="access"] .site-header{position:fixed;top:0;left:0;right:0;z-index:5}
+.screen[data-screen="access"] .site-header,
+.screen[data-screen="vault"] .site-header,
+.screen[data-screen="check"] .site-header{position:fixed;top:0;left:0;right:0;z-index:5}
+/* give vault & check content top clearance for the full-bleed header */
+.screen[data-screen="vault"] .vault-top{margin-top:calc(env(safe-area-inset-top,0px) + 74px)}
+.screen[data-screen="check"] .back-row{margin-top:calc(env(safe-area-inset-top,0px) + 74px)}
+@media (min-width:901px){
+  .screen[data-screen="vault"] .vault-top{margin-top:calc(env(safe-area-inset-top,0px) + 108px)}
+}
 .menu-toggle{width:46px;height:46px;display:flex;flex-direction:column;align-items:center;
   justify-content:center;gap:5px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
 .menu-toggle span{width:18px;height:2px;background:var(--txt);border-radius:2px;transition:.25s var(--ease)}
@@ -333,8 +341,7 @@ a{color:inherit;text-decoration:none}
   <section class="screen screen--wide hidden" data-screen="vault">
     <header class="site-header">
       <button id="menu-toggle2" class="menu-toggle" type="button" aria-expanded="false" aria-controls="drawer" data-i18n-aria="menuOpen"><span></span><span></span><span></span></button>
-      <p class="header-eyebrow" data-i18n="vaultEyebrow">LOCAL / ENCRYPTED</p>
-      <img src="assets/alansari-tech-logo-red-white.png" alt="Alansari.Tech" class="header-alansari" />
+            <img src="assets/alansari-tech-logo-red-white.png" alt="Alansari.Tech" class="header-alansari" />
           </header>
 
           <div class="vault-top">
@@ -358,8 +365,7 @@ a{color:inherit;text-decoration:none}
   <section class="screen hidden" data-screen="check">
     <header class="site-header">
       <button id="menu-toggle3" class="menu-toggle" type="button" aria-expanded="false" aria-controls="drawer" data-i18n-aria="menuOpen"><span></span><span></span><span></span></button>
-      <p class="header-eyebrow">PASSWORD CHECK</p>
-      <img src="assets/alansari-tech-logo-red-white.png" alt="Alansari.Tech" class="header-alansari" />
+            <img src="assets/alansari-tech-logo-red-white.png" alt="Alansari.Tech" class="header-alansari" />
           </header>
 
           <div class="back-row">
