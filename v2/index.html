@@ -37,7 +37,7 @@ a{color:inherit;text-decoration:none}
 .hidden{display:none !important}
 
 /* ---------- Background layers ---------- */
-#binary-rain{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.85}
+#binary-rain{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.55}
 .noise-layer{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.35;
   background-image:radial-gradient(rgba(255,255,255,.02) 1px,transparent 1px);
   background-size:3px 3px}
@@ -1193,13 +1193,13 @@ function initRain(){
                   x:cx*fs+fs*0.15, y:cy*fs+fs*0.75,
                   ch:Math.random()>.5?"0":"1",
                   on:Math.random()>.5,
-                  nextFlip:Date.now()+Math.random()*800,
-                  // random on/off durations for a lively but calm medium rhythm
-                  onDur:0.5+Math.random()*1.2,
-                  offDur:0.4+Math.random()*1.0,
-                  bright:0.45+Math.random()*0.25,   // bright level when lit
-                  dim:0.04+Math.random()*0.05,      // faint when off
-                });
+                                    nextFlip:Date.now()+Math.random()*800,
+                                    // random on/off durations for a lively but calm medium rhythm
+                                    onDur:0.6+Math.random()*1.5,
+                                    offDur:0.5+Math.random()*1.3,
+                                    bright:0.28+Math.random()*0.15,   // soft when lit
+                                    dim:0.02+Math.random()*0.03,      // nearly transparent when off
+                                  });
       }
     }
   }
