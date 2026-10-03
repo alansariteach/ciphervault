@@ -492,7 +492,7 @@ const I18N = {
     emptyBtn:"+ إضافة حساب", noResults:"لا توجد نتائج مطابقة لبحثك.",
     addTitle:"إضافة حساب جديد", editTitle:"تعديل الحساب",
     svcName:"اسم الخدمة", svcUser:"اسم المستخدم أو البريد", svcPw:"كلمة المرور",
-    svcUrl:"رابط الموقع", svcNotes:"ملاحظات اختيارية", svcCat:"تصنيف اختياري",
+    svcUrl:"رابط الموقع", svcNotes:"ملاحظات اختيارية",
     save:"حفظ الحساب", cancel:"إلغاء", delete:"حذف",
     copied:"تم النسخ", copyUser:"نسخ اسم المستخدم", copyPw:"نسخ كلمة المرور",
     show:"إظهار", hide:"إخفاء",
@@ -554,7 +554,7 @@ const I18N = {
     emptyBtn:"+ Add Account", noResults:"No results match your search.",
     addTitle:"Add New Account", editTitle:"Edit Account",
     svcName:"Service name", svcUser:"Username or email", svcPw:"Password",
-    svcUrl:"Site URL", svcNotes:"Optional notes", svcCat:"Optional category",
+    svcUrl:"Site URL", svcNotes:"Optional notes",
     save:"Save Account", cancel:"Cancel", delete:"Delete",
     copied:"Copied", copyUser:"Copy username", copyPw:"Copy password",
     show:"Show", hide:"Hide",
@@ -833,8 +833,6 @@ function openAdd(id){
       <input type="password" id="a-pw" value="${esc(en?en.pw:"")}" autocomplete="new-password"/>
       <button type="button" class="eye-toggle" data-eye="a-pw">👁</button></div>
     <div class="field"><label>${t("svcUrl")}</label><input id="a-url" value="${esc(en?en.url:"")}" placeholder="https://"/></div>
-    <div class="field"><label>${t("svcCat")}</label>
-      <input id="a-cat" value="${esc(en?en.cat:"")}" placeholder="${t("svcCat")}"/></div>
     <div class="field"><label>${t("svcNotes")}</label><textarea id="a-notes" rows="2">${esc(en?en.notes:"")}</textarea></div>
     <div class="modal__actions">
       <button class="btn btn--primary" id="a-save">${t("save")}</button>
@@ -851,15 +849,15 @@ function openAdd(id){
     const pw=ov.querySelector("#a-pw").value;
     if(!name||!user||!pw){toast(t("fillRequired"),true);return;}
     if(en){
-      Object.assign(en,{name,user,pw,url:ov.querySelector("#a-url").value.trim(),
-        cat:ov.querySelector("#a-cat").value.trim(),notes:ov.querySelector("#a-notes").value.trim(),updated:Date.now()});
-    }else{
-      state.vault.entries.push({id:"e"+Date.now()+Math.floor(Math.random()*9999),
-        name,user,pw,url:ov.querySelector("#a-url").value.trim(),
-        cat:ov.querySelector("#a-cat").value.trim(),notes:ov.querySelector("#a-notes").value.trim(),
-        updated:Date.now()});
-    }
-    await persistVault();ov.remove();renderVault();toast(t("saved"));
+          Object.assign(en,{name,user,pw,url:ov.querySelector("#a-url").value.trim(),
+            notes:ov.querySelector("#a-notes").value.trim(),updated:Date.now()});
+        }else{
+          state.vault.entries.push({id:"e"+Date.now()+Math.floor(Math.random()*9999),
+            name,user,pw,url:ov.querySelector("#a-url").value.trim(),
+            notes:ov.querySelector("#a-notes").value.trim(),
+            updated:Date.now()});
+        }
+        await persistVault();ov.remove();renderVault();toast(t("saved"));
   };
   if(en){
     ov.querySelector("#a-del").onclick=async()=>{
