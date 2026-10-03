@@ -461,6 +461,22 @@ a{color:inherit;text-decoration:none}
   <p id="loading-text" data-i18n="opening">جار فتح الخزنة المشفرة...</p>
 </div>
 
+<!-- Generic password prompt (export / import / biometric) -->
+<div class="modal-overlay hidden" id="pw-prompt">
+  <div class="modal modal--prompt">
+    <div class="modal__head"><h2 id="pw-prompt-title">...</h2>
+      <button class="modal__close" id="pw-prompt-cancel">×</button></div>
+    <div class="field">
+      <input type="password" id="pw-prompt-input" autocomplete="current-password" placeholder="••••••" />
+      <button type="button" class="eye-toggle" data-eye="pw-prompt-input" aria-label="إظهار/إخفاء"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+    </div>
+    <div class="modal__actions">
+      <button class="btn btn--primary" id="pw-prompt-ok">تأكيد</button>
+      <button class="btn btn--ghost" id="pw-prompt-cancel2">إلغاء</button>
+    </div>
+  </div>
+</div>
+
 <script>
 "use strict";
 /* ============================================================
@@ -486,6 +502,7 @@ const I18N = {
     footerDate:"تاريخ تصميم الموقع: 2026-10-03",
         footerBy:"صمم بواسطة Alansari.Tech",
         back:"الرجوع",
+    confirmTitle:"تأكيد",
         bioLogin:"فتح بالبصمة",
         bioAskPw:"أدخل كلمة المرور الرئيسية لتفعيل البصمة على هذا الجهاز.",
         bioBadPw:"كلمة المرور غير صحيحة.",
@@ -552,6 +569,7 @@ const I18N = {
     footerDate:"Site designed on: 2026-10-03",
         footerBy:"Designed by Alansari.Tech",
         back:"Back",
+    confirmTitle:"Confirm",
         bioLogin:"Unlock with Biometric",
         bioAskPw:"Enter your master password to enable biometric on this device.",
         bioBadPw:"Incorrect password.",
@@ -708,6 +726,41 @@ function showLoading(txt){
   $("#loading").classList.remove("hidden");
 }
 function hideLoading(){$("#loading").classList.add("hidden");}
+
+/* ---- In-app password prompt (replaces non-standard window.prompt) ---- */
+let __pwResolve=null;
+function prompt(msg){
+  $("#pw-prompt-title").textContent=msg;
+  $("#pw-prompt").classList.remove("hidden");
+  $("#pw-prompt-input").value="";
+  setTimeout(()=>$("#pw-prompt-input").focus(),60);
+  return new Promise(res=>{__pwResolve=res;});
+}
+function closePrompt(val){
+  $("#pw-prompt").classList.add("hidden");
+  const r=__pwResolve;__pwResolve=null;
+  if(r)r(val);
+}
+/* ---- In-app confirm dialog (replaces non-standard window.confirm) ---- */
+let __cfResolve=null;
+function confirm(msg){
+  return new Promise(res=>{
+    const ov=document.createElement("div");ov.className="modal-overlay";
+    ov.innerHTML=`<div class="modal modal--confirm">
+      <div class="modal__head"><h2>${t("confirmTitle")}</h2></div>
+      <p style="color:var(--muted);font-size:14px;line-height:1.7;margin:6px 0 18px">${esc(msg)}</p>
+      <div class="modal__actions">
+        <button class="btn btn--primary" id="cf-yes">${t("yes")}</button>
+        <button class="btn btn--ghost" id="cf-no">${t("no")}</button>
+      </div></div>`;
+    document.body.appendChild(ov);
+    const done=(v)=>{ov.remove();res(v);};
+    ov.querySelector("#cf-yes").onclick=()=>done(true);
+    ov.querySelector("#cf-no").onclick=()=>done(false);
+    ov.addEventListener("click",e=>{if(e.target===ov)done(false);});
+  });
+}
+
 function openDrawer(){$("#drawer").classList.add("open");$("#drawer-overlay").classList.remove("hidden");$("#drawer").setAttribute("aria-hidden","false");}
 function closeDrawer(){$("#drawer").classList.remove("open");$("#drawer-overlay").classList.add("hidden");$("#drawer").setAttribute("aria-hidden","true");}
 
@@ -901,7 +954,7 @@ function openAdd(id){
   };
   if(en){
     ov.querySelector("#a-del").onclick=async()=>{
-      if(!confirm(t("confirmDelete")))return;
+          if(!await confirm(t("confirmDelete")))return;
       state.vault.entries=state.vault.entries.filter(x=>x.id!==en.id);
       await persistVault();ov.remove();renderVault();toast(t("deleted"));
     };
@@ -911,7 +964,7 @@ function openAdd(id){
   setTimeout(()=>{const f=ov.querySelector("#a-name");if(f)f.focus();},50);
 }
 async function delAccount(id){
-  if(!confirm(t("confirmDelete")))return;
+  if(!await confirm(t("confirmDelete")))return;
   state.vault.entries=state.vault.entries.filter(x=>x.id!==id);
   await persistVault();renderVault();toast(t("deleted"));
 }
@@ -960,7 +1013,7 @@ async function runCheck(){
 
 /* ---------------- Export / Import ---------------- */
 async function doExport(){
-  const pw=prompt(t("exportAsk"));
+  const pw=await prompt(t("exportAsk"));
   if(!pw)return;
   const res=await tryUnlock(pw);
   if(!res.ok){toast(t("exportErr"),true);return;}
@@ -977,9 +1030,9 @@ function doImport(){
   const inp=document.createElement("input");inp.type="file";inp.accept=".json,.cvault.json";
   inp.onchange=async()=>{
     const f=inp.files[0];if(!f)return;
-    const pw=prompt(t("importAsk"));
+    const pw=await prompt(t("importAsk"));
     if(!pw)return;
-    if(!confirm(t("importConfirm")))return;
+    if(!await confirm(t("importConfirm")))return;
     try{
       const text=await f.text();const data=JSON.parse(text);
       if(!data.env||!data.salt)throw new Error("bad");
@@ -1023,7 +1076,7 @@ async function doBiometric(){
   const supported=credSupported();
   if(!supported){toast(t("bioUnsupported"),true);return;}
   // require the master password so we can store it wrapped for later biometric unlock
-  const pw=prompt(t("bioAskPw"));
+  const pw=await prompt(t("bioAskPw"));
   if(!pw)return;
   const res=await tryUnlock(pw);
   if(!res.ok){toast(t("bioBadPw"),true);return;}
@@ -1076,11 +1129,14 @@ async function doInstall(){
 
 /* ---------------- Lock ---------------- */
 function lockVault(){
-  if(!confirm(t("confirmLock")))return;
-  state={cfg:loadCfg(),vault:null,key:null};
-  closeDrawer();
-  renderAccess();
-  showScreen("access");
+  const doLock=async()=>{
+    if(!await confirm(t("confirmLock")))return;
+    state={cfg:loadCfg(),vault:null,key:null};
+    closeDrawer();
+    renderAccess();
+    showScreen("access");
+  };
+  doLock();
 }
 
 /* ---------------- Wire up ---------------- */
@@ -1090,7 +1146,11 @@ function bind(){
   $("#drawer-overlay").addEventListener("click",closeDrawer);
   $("#btn-lang").addEventListener("click",()=>{lang=lang==="ar"?"en":"ar";applyLang();renderAccess();if(!state.vault)return;renderVault();});
   $("#btn-lock").addEventListener("click",lockVault);
-  $("#btn-bio-login").addEventListener("click",bioUnlock);
+    $("#btn-bio-login").addEventListener("click",bioUnlock);
+    $("#pw-prompt-ok").addEventListener("click",()=>closePrompt($("#pw-prompt-input").value));
+    $("#pw-prompt-cancel").addEventListener("click",()=>closePrompt(null));
+    $("#pw-prompt-cancel2").addEventListener("click",()=>closePrompt(null));
+    $("#pw-prompt-input").addEventListener("keydown",e=>{if(e.key==="Enter")closePrompt($("#pw-prompt-input").value);});
   $("#search").addEventListener("input",renderVault);
   $("#btn-add").addEventListener("click",openAdd);
   $("#btn-check").addEventListener("click",()=>showScreen("check"));
