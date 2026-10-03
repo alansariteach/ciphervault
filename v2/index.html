@@ -224,6 +224,9 @@ a{color:inherit;text-decoration:none}
 .check-card h2{font-size:18px;margin-bottom:6px}
 .check-card .check-sub{color:var(--muted);font-size:13px;margin-bottom:18px;line-height:1.6}
 .check-pwrow{display:flex;align-items:center;gap:10px}
+.pw-row{display:flex;align-items:center;gap:10px}
+.pw-row .field{flex:1}
+.pw-row .field input{padding-inline-end:14px}
 .check-pwrow .field{flex:1;position:relative}
 .check-pwrow .field input{padding-inline-end:14px}
 .eye-outside{width:48px;height:48px;flex-shrink:0;display:flex;align-items:center;
@@ -466,10 +469,12 @@ a{color:inherit;text-decoration:none}
   <div class="modal modal--prompt">
     <div class="modal__head"><h2 id="pw-prompt-title">...</h2>
       <button class="modal__close" id="pw-prompt-cancel">×</button></div>
-    <div class="field">
-      <input type="password" id="pw-prompt-input" autocomplete="current-password" placeholder="••••••" />
-      <button type="button" class="eye-toggle" data-eye="pw-prompt-input" aria-label="إظهار/إخفاء"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
-    </div>
+    <div class="pw-row">
+          <div class="field" style="margin-bottom:0">
+            <input type="password" id="pw-prompt-input" autocomplete="current-password" placeholder="••••••" />
+          </div>
+          <button type="button" class="eye-outside" data-eye="pw-prompt-input" aria-label="إظهار/إخفاء"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        </div>
     <div class="modal__actions">
       <button class="btn btn--primary" id="pw-prompt-ok">تأكيد</button>
       <button class="btn btn--ghost" id="pw-prompt-cancel2">إلغاء</button>
@@ -1167,10 +1172,10 @@ function bind(){
     if(n==="install"){doInstall();return;}
     showScreen(n);
   }));
-  $$(".eye-toggle").forEach(b=>b.addEventListener("click",()=>{
-    const inp=$("#"+b.dataset.eye);
-    if(inp)inp.type=inp.type==="password"?"text":"password";
-  }));
+  $$(".eye-toggle,.eye-outside").forEach(b=>b.addEventListener("click",()=>{
+      const inp=$("#"+b.dataset.eye);
+      if(inp)inp.type=inp.type==="password"?"text":"password";
+    }));
   window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();window.deferredPrompt=e;});
 }
 
