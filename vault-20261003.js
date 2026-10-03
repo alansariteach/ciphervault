@@ -433,7 +433,7 @@ importForm.addEventListener('submit', restoreBackup);
 lockVaultButton.addEventListener('click', lockVault);
 document.addEventListener('ciphervault:languagechange', () => { if (vaultKey) renderEntries(); });
 window.addEventListener('message', (event) => {
-  if (event.origin !== window.location.origin || event.source !== window.parent || event.data?.type !== 'ciphervault:unlock') return;
+  if (event.origin !== window.location.origin || event.data?.type !== 'ciphervault:unlock') return;
   const key = event.data.key;
   const password = typeof event.data.password === 'string' ? event.data.password : '';
   if (password) {
