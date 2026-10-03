@@ -1179,7 +1179,7 @@ function bind(){
   window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();window.deferredPrompt=e;});
 }
 
-/* ---------------- Binary twinkle field (static digits, random glow) ---------------- */
+/* ---------------- Binary blink field (static digits, random on/off) ---------------- */
 function initRain(){
   const cv=$("#binary-rain"),ctx=cv.getContext("2d");
   let w,h,fs=16,cells=[];
@@ -1190,37 +1190,42 @@ function initRain(){
     for(let cy=0;cy<rows;cy++){
       for(let cx=0;cx<cols;cx++){
         cells.push({
-          x:cx*fs+fs*0.15, y:cy*fs+fs*0.75,
-          ch:Math.random()>.5?"0":"1",
-          phase:Math.random()*Math.PI*2,
-          speed:(Math.random()*0.5+0.4)*(Math.random()>.7?1:-1), // varied, slower twinkle
-          base:0.05+Math.random()*0.08,
-        });
+                  x:cx*fs+fs*0.15, y:cy*fs+fs*0.75,
+                  ch:Math.random()>.5?"0":"1",
+                  on:Math.random()>.5,
+                  nextFlip:Date.now()+Math.random()*800,
+                  // random on/off durations for a lively but calm medium rhythm
+                  onDur:0.5+Math.random()*1.2,
+                  offDur:0.4+Math.random()*1.0,
+                  bright:0.45+Math.random()*0.25,   // bright level when lit
+                  dim:0.04+Math.random()*0.05,      // faint when off
+                });
       }
     }
   }
   buildGrid();
   addEventListener("resize",buildGrid);
   const reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const t0=performance.now();
-  function draw(t){
-    const e=(t-t0)/1000;
-    ctx.fillStyle="#030303";ctx.fillRect(0,0,w,h);
-    ctx.font=fs+"px monospace";
-    ctx.textBaseline="alphabetic";
-    for(let i=0;i<cells.length;i++){
-      const c=cells[i];
-      // smooth, individual glow: rising and falling on its own random rhythm
-      let a=c.base+(Math.sin(e*c.speed+c.phase)+1)*0.12;
-                  if(a<0)a=0;if(a>0.55)a=0.55;
-      ctx.fillStyle=`rgba(229,10,30,${a.toFixed(3)})`;
-      if(reduced)ctx.fillStyle="rgba(229,10,30,0.22)";
-      ctx.fillText(c.ch,c.x,c.y);
+    function draw(){
+      ctx.fillStyle="#030303";ctx.fillRect(0,0,w,h);
+      ctx.font=fs+"px monospace";
+      ctx.textBaseline="alphabetic";
+      const nowMs=Date.now();
+      for(let i=0;i<cells.length;i++){
+        const c=cells[i];
+        if(nowMs>=c.nextFlip){
+          c.on=!c.on;
+          c.nextFlip=nowMs+(c.on?c.onDur:c.offDur)*1000;
+        }
+        const a=c.on?c.bright:c.dim;
+        ctx.fillStyle=`rgba(229,10,30,${a.toFixed(3)})`;
+        if(reduced)ctx.fillStyle="rgba(229,10,30,0.20)";
+        ctx.fillText(c.ch,c.x,c.y);
+      }
+      setTimeout(draw,40);   // ~25fps, reliable in any tab
     }
-    requestAnimationFrame(draw);
+    setTimeout(draw,40);
   }
-  requestAnimationFrame(draw);
-}
 
 /* ---------------- Boot ---------------- */
 function boot(){
