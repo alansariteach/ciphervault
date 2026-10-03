@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>اختيار الخط العربي — CipherVault</title>
+<style>
+:root{--bg:#030303;--panel:#0d0d0f;--txt:#f2f2f3;--muted:#9a9aa3;--red:#e50a1e;--red-soft:#ff2a3d;--line:rgba(255,255,255,.08)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--txt);font-family:system-ui,sans-serif;padding:18px}
+h1{font-size:23px;margin-bottom:4px}
+p.head{color:var(--muted);font-size:13px;margin-bottom:16px;line-height:1.7}
+.note{color:var(--muted2);font-size:12px;margin-bottom:16px;line-height:1.6}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:13px}
+.font-card{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:11px}
+.font-card.selected{border-color:var(--red-soft);box-shadow:0 0 0 2px rgba(229,10,30,.25)}
+.num{position:absolute;top:9px;inset-inline-start:10px;width:26px;height:26px;border-radius:50%;background:var(--red);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;z-index:2}
+.fc-head{padding-inline-start:36px;display:flex;align-items:center;justify-content:space-between}
+.fc-name{font-family:var(--f);font-size:14px;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:170px}
+.fc-tag{font-family:monospace;font-size:9.5px;color:var(--muted)}
+.ar-big{font-family:var(--f);font-size:26px;font-weight:700;color:var(--red);text-align:center;line-height:1.2}
+.ar-pw{background:rgba(0,0,0,.4);border:1px solid var(--line);border-radius:9px;padding:8px 11px;font-family:var(--f);font-size:13px;color:var(--muted)}
+.ar-btn{font-family:var(--f);font-size:13px;font-weight:600;background:linear-gradient(135deg,var(--red-soft),var(--red));color:#fff;border-radius:10px;padding:9px;text-align:center}
+.ar-body{font-family:var(--f);font-size:13px;color:var(--muted);line-height:1.7;text-align:right}
+.pick{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:10px;padding:8px;font-size:13px;color:var(--muted);cursor:pointer}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+.result{display:none;margin-top:11px;padding:13px;border:1px solid var(--red-soft);border-radius:12px;background:var(--panel)}
+.result h3{color:var(--txt);font-size:14px;margin-bottom:5px}
+.result code{display:block;background:rgba(0,0,0,.5);border:1px solid var(--line);border-radius:8px;padding:7px 12px;font-family:monospace;font-size:12px;color:#86efac;white-space:pre-wrap;word-break:break-all}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#161618;border:1px solid var(--line);color:#fff;padding:11px 22px;border-radius:12px;z-index:50;opacity:0;transition:.3s;font-size:14px}
+#toast.show{opacity:1}
+</style>
+</head>
+<body dir="rtl">
+<h1>اختيار الخط العربي — 20 خط مرقّم ✍️</h1>
+<p class="head">كل بطاقة تعرض نص الواجهة العربية بالخط: اسم المنتج، حقل كلمة المرور، الزر، وجملة توضيحية.<br/>عجبتك وحدة؟ قول لي <b style="color:var(--red-soft)">رقمها</b> هنا وأطبّقها على الموقع.</p>
+<p class="note">⚠️ ملاحظة: بعض الخطوط عربية فقط (نسخ/كوفي/رقعة) ولا تدعم الإنجليزية — سنطبّقها على الواجهة العربية، والإنجليزية تبقى Audiowide.</p>
+
+<div class="grid" id="grid"></div>
+<div class="result" id="result"><h3>الخط المختار — رقم:</h3><code id="code"></code></div>
+<div id="toast">✓ تم الاختيار</div>
+
+<script>
+const FONTS=[
+["1","Tajawal","Tajawal","نسخ حديث أنيق"],
+["2","Cairo","Cairo","نسخ نظيف"],
+["3","IBM Plex Sans Arabic","IBM+Plex+Sans+Arabic","سنس لاتيني عربي"],
+["4","Noto Kufi Arabic","Noto+Kufi+Arabic","كوفي عصري"],
+["5","Noto Naskh Arabic","Noto+Naskh+Arabic","نسخ تقليدي"],
+["6","Changa","Changa","نسخ هادئ"],
+["7","Almarai","Almarai","نسخ أعمالي"],
+["8","El Messiri","El+Messiri","نسخ مريح"],
+["9","Katibeh","Katibeh","عرضي فاخر"],
+["10","Rakkas","Rakkas","رقعة/ديواني"],
+["11","Aref Ruqaa","Aref+Ruqaa","رقعة أنيقة"],
+["12","Reem Kufi","Reem+Kufi","كوفي هندسي"],
+["13","Mada","Mada","كوفي حديث"],
+["14","Zain","Zain","نسخ منظم"],
+["15","Markazi Text","Markazi+Text","نسخ تحريري"],
+["16","Harmattan","Harmattan","سنس عربي"],
+["17","Lalezar","Lalezar","إعلاني عصري"],
+["18","Jomhuria","Jomhuria","عرضي ثقيل"],
+["19","Fustat","Fustat","نسخ تقليدي ناعم"],
+["20","Kadwa","Kadwa","نسخ بكسل نظيف"],
+];
+const grid=document.getElementById('grid');
+const SAMPLE="الجملة العربية التجريبية فتح الخزنة أضف حساباً";
+FONTS.forEach(f=>{
+  const[num,name,gf,d]=f;
+  const card=document.createElement('div');card.className='font-card';
+  card.style.setProperty('--f',"'"+(gf.split('+').join(' '))+"',sans-serif");
+  card.innerHTML=`
+    <style>@import url('https://fonts.googleapis.com/css2?family=${gf}&display=swap');</style>
+    <span class="num">${num}</span>
+    <div class="fc-head"><span class="fc-name">${name}</span><span class="fc-tag">${d}</span></div>
+    <div class="ar-big">خزنة CipherVault</div>
+    <div class="ar-pw">••••••••</div>
+    <div class="ar-btn">فتح الخزنة</div>
+    <div class="ar-body">أنشئ كلمة مرور رئيسية قوية لحماية خزنتك. البيانات تبقى مشفرة محلياً على جهازك — لا يمكن استعادتها إذا نسيتها.</div>
+    <button class="pick" data-gf="${gf}" data-name="${name}" data-num="${num}">اختيار رقم ${num}</button>`;
+  grid.appendChild(card);
+});
+document.querySelectorAll('.pick').forEach(b=>{
+  b.addEventListener('click',()=>{
+    const gf=b.dataset.gf,name=b.dataset.name,num=b.dataset.num;
+    document.querySelectorAll('.font-card').forEach(c=>c.classList.remove('selected'));
+    b.closest('.font-card').classList.add('selected');
+    document.getElementById('code').textContent=`الخط المختار: رقم ${num} — ${name}\n\n@import url('https://fonts.googleapis.com/css2?family=${gf}&display=swap');\n\n--font: '${name}', 'Audiowide', 'Segoe UI', system-ui, sans-serif;`;
+    document.getElementById('result').style.display='block';
+    const t=document.getElementById('toast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800);
+  });
+});
+</script>
+</body>
+</html>
