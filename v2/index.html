@@ -168,6 +168,10 @@ a{color:inherit;text-decoration:none}
 .vault-card__head{display:flex;align-items:center;gap:11px}
 .vault-card__ico{width:42px;height:42px;border-radius:11px;background:var(--red-dim);border:1px solid rgba(229,10,30,.2);
   display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--red-soft);flex-shrink:0}
+.vault-card__fav{width:28px;height:28px;object-fit:contain;border-radius:6px;background:rgba(255,255,255,.05)}
+.url-row{display:flex;align-items:center;gap:10px}
+.url-row input{flex:1}
+.url-fav{width:38px;height:38px;object-fit:contain;opacity:0;border-radius:8px;background:var(--panel);border:1px solid var(--line);flex-shrink:0}
 .vault-card__name{font-weight:600;font-size:15px;flex:1;line-height:1.3;word-break:break-word}
 .vault-card__user{font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:6px;word-break:break-all}
 .vault-card__pw{display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.35);border:1px solid var(--line);
@@ -779,13 +783,21 @@ function renderVault(){
   c.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>openAdd(b.dataset.edit));
   c.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>delAccount(b.dataset.del));
 }
+function faviconUrl(url){
+  try{
+    const u=new URL(url);
+    return "https://www.google.com/s2/favicons?domain="+encodeURIComponent(u.hostname)+"&sz=48";
+  }catch(e){return null;}
+}
 function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));}
 function cardHTML(en){
   const date=en.updated?new Date(en.updated).toLocaleDateString(lang==="ar"?"ar-EG":"en-US"):"";
   const site=en.url?`<a class="vault-card__site" href="${esc(en.url)}" target="_blank" rel="noopener noreferrer">↗ ${esc(en.url)}</a>`:"";
+  const fv=faviconUrl(en.url);
+  const ico=fv?`<img class="vault-card__fav" src="${esc(fv)}" data-name="${esc(en.name)}" alt="" onerror="this.closest('.vault-card__ico').innerHTML='🔑';" />`:"🔑";
   return `<div class="vault-card" data-id="${esc(en.id)}">
     <div class="vault-card__head">
-      <div class="vault-card__ico">${esc(en.cat||"🔑")}</div>
+      <div class="vault-card__ico">${ico}</div>
       <div><div class="vault-card__name">${esc(en.name)}</div>
       <div class="vault-card__user">@ ${esc(en.user)}</div></div>
     </div>
@@ -832,7 +844,9 @@ function openAdd(id){
     <div class="field"><label>${t("svcPw")} *</label>
       <input type="password" id="a-pw" value="${esc(en?en.pw:"")}" autocomplete="new-password"/>
       <button type="button" class="eye-toggle" data-eye="a-pw">👁</button></div>
-    <div class="field"><label>${t("svcUrl")}</label><input id="a-url" value="${esc(en?en.url:"")}" placeholder="https://"/></div>
+    <div class="field"><label>${t("svcUrl")}</label>
+      <div class="url-row"><input id="a-url" value="${esc(en?en.url:"")}" placeholder="https://" />
+      <img id="a-fav" class="url-fav" alt="" /></div></div>
     <div class="field"><label>${t("svcNotes")}</label><textarea id="a-notes" rows="2">${esc(en?en.notes:"")}</textarea></div>
     <div class="modal__actions">
       <button class="btn btn--primary" id="a-save">${t("save")}</button>
@@ -843,6 +857,14 @@ function openAdd(id){
   document.body.appendChild(ov);
   ov.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>ov.remove());
   ov.addEventListener("click",e=>{if(e.target===ov)ov.remove();});
+  const fav=ov.querySelector("#a-fav");
+  const updFav=()=>{
+    const fv=faviconUrl(ov.querySelector("#a-url").value.trim());
+    if(fv){fav.src=fv;fav.style.opacity="1";fav.onerror=()=>{fav.style.opacity="0";};}
+    else{fav.removeAttribute("src");fav.style.opacity="0";}
+  };
+  ov.querySelector("#a-url").addEventListener("input",updFav);
+  updFav();
   ov.querySelector("#a-save").onclick=async()=>{
     const name=ov.querySelector("#a-name").value.trim();
     const user=ov.querySelector("#a-user").value.trim();
