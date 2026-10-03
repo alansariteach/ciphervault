@@ -154,7 +154,7 @@ function closeVault() {
   activePassword = null;
   vaultHost.hidden = true;
   document.body.classList.remove('vault-session-active');
-  vaultFrame.src = `vault-20261003.html?embedded=1&reset=${Date.now()}`;
+  vaultFrame.src = `vault-runtime-20261003-1353.html?embedded=1&reset=${Date.now()}`;
   initAccess();
 }
 
