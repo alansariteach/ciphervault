@@ -130,6 +130,12 @@ function sendUnlockToFrame() {
   vaultFrame.contentWindow.postMessage({ type: 'ciphervault:unlock', key: activeKey }, window.location.origin);
 }
 
+function sendUnlockWithRetry() {
+  sendUnlockToFrame();
+  window.setTimeout(sendUnlockToFrame, 120);
+  window.setTimeout(sendUnlockToFrame, 500);
+}
+
 function openVault(key) {
   activeKey = key;
   passwordInput.value = '';
@@ -137,7 +143,7 @@ function openVault(key) {
   vaultHost.hidden = false;
   document.body.classList.add('vault-session-active');
   toggleMenu(false);
-  sendUnlockToFrame();
+  sendUnlockWithRetry();
 }
 
 function closeVault() {
@@ -198,7 +204,7 @@ document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && 
 visibilityToggle.addEventListener('click', () => toggleVisibility(visibilityToggle, passwordInput, accessMode === 'create' ? 'masterPassword' : 'showMaster'));
 confirmVisibilityToggle.addEventListener('click', () => toggleVisibility(confirmVisibilityToggle, confirmInput, 'showPassword'));
 biometricUnlockButton.addEventListener('click', unlockWithBiometrics);
-vaultFrame.addEventListener('load', sendUnlockToFrame);
+vaultFrame.addEventListener('load', sendUnlockWithRetry);
 
 unlockForm.addEventListener('submit', async (event) => {
   event.preventDefault();
@@ -279,7 +285,7 @@ document.addEventListener('ciphervault:languagechange', () => {
 document.addEventListener('ciphervault:biometricchange', initAccess);
 window.addEventListener('message', (event) => {
   if (event.origin !== window.location.origin || event.source !== vaultFrame.contentWindow) return;
-  if (event.data?.type === 'ciphervault:ready') sendUnlockToFrame();
+  if (event.data?.type === 'ciphervault:ready') sendUnlockWithRetry();
   if (event.data?.type === 'ciphervault:lock') closeVault();
   if (event.data?.type === 'ciphervault:install') window.CipherVaultPWA?.triggerInstall();
 });

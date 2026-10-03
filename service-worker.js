@@ -1,10 +1,10 @@
-const CACHE_NAME = 'ciphervault-shell-v20';
+const CACHE_NAME = 'ciphervault-shell-v21';
 const APP_SHELL = [
   './', './index.html', './vault.html', './manifest.webmanifest',
   './styles.css', './vault.css', './password-check.css', './password-visibility.css', './local-vault.css',
-  './language.css?v=20261001-0129', './biometric.css?v=20261001-0129', './responsive.css?v=20261001-0129',
-  './app.js?v=20261001-0129', './vault.js', './language.js?v=20261001-0129', './pwa.js',
-  './crypto-vault.js?v=20261001-0129', './vault-store.js?v=20261001-0129', './biometric-vault.js?v=20261001-0129',
+  './language.css?v=20261003-1337', './biometric.css?v=20261003-1337', './responsive.css?v=20261003-1337',
+  './app.js?v=20261003-1337', './vault.js', './language.js?v=20261003-1337', './pwa.js',
+  './crypto-vault.js?v=20261003-1337', './vault-store.js?v=20261003-1337', './biometric-vault.js?v=20261003-1337',
   './assets/fonts/ciphervault-1.woff2', './assets/fonts/ciphervault-10.woff2', './assets/fonts/ciphervault-11.woff2', './assets/fonts/ciphervault-12.woff2', './assets/fonts/ciphervault-13.woff2', './assets/fonts/ciphervault-14.woff2', './assets/fonts/ciphervault-15.woff2', './assets/fonts/ciphervault-2.woff2', './assets/fonts/ciphervault-3.woff2', './assets/fonts/ciphervault-4.woff2', './assets/fonts/ciphervault-5.woff2', './assets/fonts/ciphervault-6.woff2', './assets/fonts/ciphervault-7.woff2', './assets/fonts/ciphervault-8.woff2', './assets/fonts/ciphervault-9.woff2', './assets/fonts/fonts.css',
   './assets/pwa-icon-192.png', './assets/pwa-icon-512.png', './assets/apple-touch-icon.png',
   './assets/personal-biohazard-mark.png', './assets/alansari-tech-logo.png'

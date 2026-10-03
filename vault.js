@@ -435,9 +435,9 @@ document.addEventListener('ciphervault:languagechange', () => { if (vaultKey) re
 window.addEventListener('message', (event) => {
   if (event.origin !== window.location.origin || event.source !== window.parent || event.data?.type !== 'ciphervault:unlock') return;
   const key = event.data.key;
-  // Structured-cloned CryptoKeys can have a different realm constructor on Android.
-  // Avoid instanceof here; Web Crypto will reject an invalid value during decrypt.
-  if (!key || typeof key !== 'object' || typeof key.algorithm !== 'object' || typeof key.usages?.includes !== 'function') return;
+  // Android may expose a structured-cloned CryptoKey with a reduced shape.
+  // Do not inspect realm-specific properties here; Web Crypto is the authority.
+  if (!key || typeof key !== 'object') return;
   loadVault(key).catch(() => lockVault());
 });
 window.addEventListener('resize', () => { window.clearTimeout(resizeTimer); resizeTimer = window.setTimeout(buildVaultRain, 160); });
