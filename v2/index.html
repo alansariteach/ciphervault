@@ -37,7 +37,7 @@ a{color:inherit;text-decoration:none}
 .hidden{display:none !important}
 
 /* ---------- Background layers ---------- */
-#binary-rain{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5}
+#binary-rain{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.85}
 .noise-layer{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.35;
   background-image:radial-gradient(rgba(255,255,255,.02) 1px,transparent 1px);
   background-size:3px 3px}
@@ -1191,11 +1191,11 @@ function initRain(){
   const reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;
   if(reduced){ctx.fillStyle="#000";ctx.fillRect(0,0,w,h);return;}
   function draw(){
-    ctx.fillStyle="rgba(3,3,3,.12)";ctx.fillRect(0,0,w,h);
+    ctx.fillStyle="rgba(3,3,3,.10)";ctx.fillRect(0,0,w,h);
     ctx.font=fs+"px monospace";
     for(let i=0;i<cols;i++){
       const ch=Math.random()>.5?"0":"1";
-      ctx.fillStyle="rgba(229,10,30,.16)";
+      ctx.fillStyle="rgba(229,10,30,.42)";
       ctx.fillText(ch,i*fs,drops[i]*fs);
       if(drops[i]*fs>h&&Math.random()>.975)drops[i]=0;
       drops[i]++;
