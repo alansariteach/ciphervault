@@ -24,6 +24,7 @@ const t = (key, values) => window.CipherVaultLanguage?.t(key, values) ?? key;
 let currentConfig;
 let accessMode = 'loading';
 let activeKey = null;
+let activePassword = null;
 let resizeTimer;
 
 year.textContent = new Date().getFullYear();
@@ -126,8 +127,8 @@ async function initAccess() {
 }
 
 function sendUnlockToFrame() {
-  if (!activeKey || !vaultFrame.contentWindow) return;
-  vaultFrame.contentWindow.postMessage({ type: 'ciphervault:unlock', key: activeKey }, window.location.origin);
+  if ((!activeKey && !activePassword) || !vaultFrame.contentWindow) return;
+  vaultFrame.contentWindow.postMessage({ type: 'ciphervault:unlock', key: activeKey, password: activePassword }, window.location.origin);
 }
 
 function sendUnlockWithRetry() {
@@ -136,21 +137,24 @@ function sendUnlockWithRetry() {
   window.setTimeout(sendUnlockToFrame, 500);
 }
 
-function openVault(key) {
+function openVault(key, password = null) {
   activeKey = key;
+  activePassword = password;
   passwordInput.value = '';
   confirmInput.value = '';
   vaultHost.hidden = false;
   document.body.classList.add('vault-session-active');
   toggleMenu(false);
   sendUnlockWithRetry();
+  window.setTimeout(() => { activePassword = null; }, 3000);
 }
 
 function closeVault() {
   activeKey = null;
+  activePassword = null;
   vaultHost.hidden = true;
   document.body.classList.remove('vault-session-active');
-  vaultFrame.src = `vault.html?embedded=1&reset=${Date.now()}`;
+  vaultFrame.src = `vault-20261003.html?embedded=1&reset=${Date.now()}`;
   initAccess();
 }
 
@@ -234,7 +238,7 @@ unlockForm.addEventListener('submit', async (event) => {
       const verifier = await VaultCrypto.createVerifier(key);
       await VaultStore.createVault({ salt, iterations: VaultCrypto.ITERATIONS, verifier });
       currentConfig = await VaultStore.getConfig();
-      openVault(key);
+      openVault(key, password);
     } catch {
       setBusy(false);
       setState(t('vaultCreateError'), 'error');
@@ -260,7 +264,7 @@ unlockForm.addEventListener('submit', async (event) => {
       return;
     }
     currentConfig = result.config;
-    openVault(key);
+    openVault(key, password);
   } catch {
     setBusy(false);
     const result = await VaultStore.recordFailedAttempt().catch(() => ({ failedAttempts: 1, lockUntil: 0 }));

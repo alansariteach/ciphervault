@@ -435,6 +435,19 @@ document.addEventListener('ciphervault:languagechange', () => { if (vaultKey) re
 window.addEventListener('message', (event) => {
   if (event.origin !== window.location.origin || event.source !== window.parent || event.data?.type !== 'ciphervault:unlock') return;
   const key = event.data.key;
+  const password = typeof event.data.password === 'string' ? event.data.password : '';
+  if (password) {
+    (async () => {
+      const config = await VaultStore.getConfig();
+      if (!config) throw new Error('Vault configuration is unavailable');
+      const derivedKey = await VaultCrypto.deriveKey(password, config.salt, config.iterations);
+      if (!await VaultCrypto.verifyKey(derivedKey, config.verifier)) throw new Error('Master password verification failed');
+      await loadVault(derivedKey);
+    })().catch(() => {
+      vaultSessionScreen.querySelector('p').textContent = t('sessionError') || 'تعذر فتح الخزنة. أعد المحاولة.';
+    });
+    return;
+  }
   // Android may expose a structured-cloned CryptoKey with a reduced shape.
   // Do not inspect realm-specific properties here; Web Crypto is the authority.
   if (!key || typeof key !== 'object') return;
