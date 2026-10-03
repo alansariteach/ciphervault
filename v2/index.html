@@ -124,6 +124,8 @@ a{color:inherit;text-decoration:none}
 .btn--primary:disabled{opacity:.55;cursor:not-allowed}
 .btn--ghost{background:rgba(255,255,255,.04);border:1px solid var(--line);color:var(--muted)}
 .btn--ghost:hover{color:var(--txt);background:rgba(255,255,255,.07)}
+.bio-login-btn{width:auto;min-width:200px;gap:10px}
+.bio-ico{font-size:18px}
 .btn--small{padding:9px 12px;min-height:38px;font-size:13px;width:auto}
 .btn--icon{width:38px;height:38px;padding:0;min-height:38px}
 .btn--danger{background:rgba(229,10,30,.12);color:var(--red-soft);border:1px solid rgba(229,10,30,.3)}
@@ -337,7 +339,11 @@ a{color:inherit;text-decoration:none}
             <button type="button" class="eye-toggle" data-eye="confirm-pw" aria-label="إظهار/إخفاء"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
           </div>
           <button type="submit" class="btn btn--primary" id="access-btn" data-i18n="accessBtn">فتح الخزنة</button>
-        </form>
+                  </form>
+
+                  <button type="button" class="btn btn--ghost bio-login-btn hidden" id="btn-bio-login">
+                    <span class="bio-ico">☝️</span><span data-i18n="bioLogin">فتح بالبصمة</span>
+                  </button>
 
         <div class="attempts hidden" id="attempts">
           <span data-i18n="attemptsLabel">متبقي</span>
@@ -480,6 +486,10 @@ const I18N = {
     footerDate:"تاريخ تصميم الموقع: 2026-10-03",
         footerBy:"صمم بواسطة Alansari.Tech",
         back:"الرجوع",
+        bioLogin:"فتح بالبصمة",
+        bioAskPw:"أدخل كلمة المرور الرئيسية لتفعيل البصمة على هذا الجهاز.",
+        bioBadPw:"كلمة المرور غير صحيحة.",
+        bioNotSetup:"لم تُفعّل البصمة بعد على هذا الجهاز.",
     myVault:"خزنتي", searchPh:"بحث في الحسابات...",
     addAccount:"+ إضافة حساب", checkPw:"فحص كلمة المرور",
     checkTitle:"فحص كلمة المرور",
@@ -542,6 +552,10 @@ const I18N = {
     footerDate:"Site designed on: 2026-10-03",
         footerBy:"Designed by Alansari.Tech",
         back:"Back",
+        bioLogin:"Unlock with Biometric",
+        bioAskPw:"Enter your master password to enable biometric on this device.",
+        bioBadPw:"Incorrect password.",
+        bioNotSetup:"Biometric is not enabled on this device yet.",
     myVault:"My Vault", searchPh:"Search accounts...",
     addAccount:"+ Add Account", checkPw:"Password Check",
     checkTitle:"Password Check",
@@ -707,6 +721,10 @@ function renderAccess(){
   $("#master-pw").value="";$("#confirm-pw").value="";
   $("#access-form").classList.remove("hidden");
   $("#lock-msg").classList.add("hidden");
+  // show "unlock with biometric" button only when a vault exists and bio is configured
+  const bioBtn=$("#btn-bio-login");
+  const bioReady=!creating&&localStorage.getItem(BIO_KEY)&&credSupported();
+  bioBtn.classList.toggle("hidden",!bioReady);
   if(isLocked()){
     $("#access-form").classList.add("hidden");
     $("#lock-msg").classList.remove("hidden");
@@ -946,8 +964,10 @@ async function doExport(){
   if(!pw)return;
   const res=await tryUnlock(pw);
   if(!res.ok){toast(t("exportErr"),true);return;}
+  const cfg=loadCfg();
   const env=await encrypt(state.key,JSON.stringify(state.vault));
-  const blob=new Blob([JSON.stringify({app:"ciphervault",v:1,env})],{type:"application/json"});
+  // include the salt so import can derive the same key on any device
+  const blob=new Blob([JSON.stringify({app:"ciphervault",v:1,salt:cfg.salt,iterations:cfg.iterations,env})],{type:"application/json"});
   const d=new Date(),ds=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);
   a.download=`ciphervault-backup-${ds}.cvault.json`;a.click();URL.revokeObjectURL(a.href);
@@ -962,8 +982,8 @@ function doImport(){
     if(!confirm(t("importConfirm")))return;
     try{
       const text=await f.text();const data=JSON.parse(text);
-      if(!data.env)throw new Error("bad");
-      const key=await deriveKey(pw,b64ToBuf(loadCfg().salt));
+      if(!data.env||!data.salt)throw new Error("bad");
+      const key=await deriveKey(pw,b64ToBuf(data.salt));
       const plain=await decrypt(key,data.env);
       const vault=JSON.parse(plain);
       if(!vault||!Array.isArray(vault.entries))throw new Error("bad");
@@ -975,20 +995,74 @@ function doImport(){
 }
 
 /* ---------------- Biometric ---------------- */
+const BIO_KEY="cv.bio";
+function credSupported(){
+  return window.PublicKeyCredential &&
+    typeof PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable==="function";
+}
+function bioChallenge(){
+  const a=new Uint8Array(32);
+  crypto.getRandomValues(a);
+  return a;
+}
+function bioBufToB64(buf){const b=new Uint8Array(buf);let s="";for(let i=0;i<b.length;i++)s+=String.fromCharCode(b[i]);return btoa(s);}
+function bioB64ToBuf(b64){const s=atob(b64);const b=new Uint8Array(s.length);for(let i=0;i<s.length;i++)b[i]=s.charCodeAt(i);return b.buffer;}
+async function bioDeriveWrap(bioSecret){
+  // AES-GCM key from the biometric secret (only usable on this device)
+  return crypto.subtle.importKey("raw",bioB64ToBuf(bioSecret),"AES-GCM",false,["encrypt","decrypt"]);
+}
+async function bioWrap(secretB64,pt){
+  const key=await bioDeriveWrap(secretB64);
+  return encrypt(key,pt);
+}
+async function bioUnwrap(secretB64,env){
+  const key=await bioDeriveWrap(secretB64);
+  return decrypt(key,env);
+}
 async function doBiometric(){
-  const supported=window.PublicKeyCredential&&
-    (await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().catch(()=>false));
+  const supported=credSupported();
   if(!supported){toast(t("bioUnsupported"),true);return;}
+  // require the master password so we can store it wrapped for later biometric unlock
+  const pw=prompt(t("bioAskPw"));
+  if(!pw)return;
+  const res=await tryUnlock(pw);
+  if(!res.ok){toast(t("bioBadPw"),true);return;}
   try{
+    const ch=bioChallenge();
     const cred=await navigator.credentials.create({
-      publicKey:{challenge:randBytes(32),rp:{name:"CipherVault"},
-        user:{id:randBytes(16),name:"ciphervault",displayName:"CipherVault"},
+      publicKey:{challenge:ch,rp:{name:"CipherVault"},
+        user:{id:bioChallenge(),name:"ciphervault",displayName:"CipherVault"},
         pubKeyCredParams:[{type:"public-key",alg:-7}],timeout:60000,
         authenticatorSelection:{authenticatorAttachment:"platform",userVerification:"required"},
         attestation:"none"}});
-    if(cred){localStorage.setItem("cv.bio","1");toast(t("bioOk"));}
-  }catch(e){toast(t("bioUnsupported"),true);}
-}
+    if(!cred)throw new Error("no-cred");
+        // Wrap the master password with a strong random secret (persisted locally).
+        // Unsealing still requires the WebAuthn (Windows Hello PIN/fingerprint) ceremony below.
+        const sec=new Uint8Array(32);crypto.getRandomValues(sec);
+        const secretB64=bioBufToB64(sec);
+        const wrapped=await bioWrap(secretB64,pw);
+        const record={id:bioBufToB64(cred.rawId||cred.id),secret:secretB64,wrapped,enabledAt:Date.now()};
+        localStorage.setItem(BIO_KEY,JSON.stringify(record));
+        toast(t("bioOk"));
+      }catch(e){toast(t("bioUnsupported"),true);}
+    }
+    async function bioUnlock(){
+      const recRaw=localStorage.getItem(BIO_KEY);
+      if(!recRaw){toast(t("bioNotSetup"),true);return;}
+      const rec=JSON.parse(recRaw);
+      try{
+        const ch=bioChallenge();
+        const assert=await navigator.credentials.get({
+          publicKey:{challenge:ch,timeout:60000,
+            allowCredentials:[{type:"public-key",id:bioB64ToBuf(rec.id)}],
+            userVerification:"required"}});
+        if(!assert)throw new Error("no-assert");
+        const pw=await bioUnwrap(rec.secret,rec.wrapped);
+        const r=await tryUnlock(pw);
+        if(!r.ok){toast(t("bioBadPw"),true);return;}
+        enterVault();
+      }catch(e){toast(t("bioUnsupported"),true);}
+    }
 
 /* ---------------- Install ---------------- */
 async function doInstall(){
@@ -1016,6 +1090,7 @@ function bind(){
   $("#drawer-overlay").addEventListener("click",closeDrawer);
   $("#btn-lang").addEventListener("click",()=>{lang=lang==="ar"?"en":"ar";applyLang();renderAccess();if(!state.vault)return;renderVault();});
   $("#btn-lock").addEventListener("click",lockVault);
+  $("#btn-bio-login").addEventListener("click",bioUnlock);
   $("#search").addEventListener("input",renderVault);
   $("#btn-add").addEventListener("click",openAdd);
   $("#btn-check").addEventListener("click",()=>showScreen("check"));
