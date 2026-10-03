@@ -1,0 +1,1010 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#030303" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="description" content="CipherVault — خزنة كلمات مرور محلية مشفرة. بياناتك على جهازك وحدك." />
+<meta name="referrer" content="no-referrer" />
+<title>CIPHERVAULT | وصول آمن</title>
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+<link rel="icon" href="assets/pwa-icon-192.png" />
+<style>
+:root{
+  --bg:#030303; --bg2:#0a0a0b; --panel:#0d0d0f;
+  --red:#e50a1e; --red-soft:#ff2a3d; --red-dim:rgba(229,10,30,.14);
+  --red-glow:rgba(229,10,30,.35); --line:rgba(255,255,255,.08);
+  --txt:#f2f2f3; --muted:#9a9aa3; --muted2:#6b6b74;
+  --green:#22c55e; --amber:#f5a623;
+  --radius:16px; --ease:cubic-bezier(.22,.61,.36,1);
+  --font:'Segoe UI',system-ui,-apple-system,'IBM Plex Sans Arabic','Tajawal',sans-serif;
+  --mono:'Consolas','SF Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  background:var(--bg); color:var(--txt); font-family:var(--font);
+  overflow-x:hidden; min-height:100vh; min-height:100dvh;
+  -webkit-font-smoothing:antialiased;
+}
+[dir="ltr"] body{--font:'Segoe UI',system-ui,sans-serif}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,textarea{font-family:inherit;color:var(--txt)}
+a{color:inherit;text-decoration:none}
+.hidden{display:none !important}
+
+/* ---------- Background layers ---------- */
+#binary-rain{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5}
+.noise-layer{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.35;
+  background-image:radial-gradient(rgba(255,255,255,.02) 1px,transparent 1px);
+  background-size:3px 3px}
+.vignette{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse at center,transparent 40%,rgba(0,0,0,.7) 100%)}
+.app{position:relative;z-index:1;min-height:100vh;min-height:100dvh}
+
+/* ---------- Header ---------- */
+.site-header{display:flex;align-items:center;justify-content:space-between;
+  padding:calc(env(safe-area-inset-top,0px) + 14px) 18px 6px;position:relative;z-index:5}
+.menu-toggle{width:46px;height:46px;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:5px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.menu-toggle span{width:18px;height:2px;background:var(--txt);border-radius:2px;transition:.25s var(--ease)}
+.header-alansari img{height:34px;width:auto;opacity:.95}
+.header-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.22em;color:var(--muted2);
+  text-transform:uppercase;text-align:center;margin:6px 0 2px}
+
+/* ---------- Lock / access screen ---------- */
+.screen{position:relative;z-index:1;max-width:520px;margin:0 auto;padding:0 20px 40px;
+  display:flex;flex-direction:column;align-items:center;min-height:calc(100vh - 90px)}
+.screen--wide{max-width:960px}
+.screen[data-screen="vault"]{max-width:1100px;width:100%}
+
+.biohazard-wrap{position:relative;margin:8px 0 10px;width:170px;height:170px}
+.biohazard-wrap img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 0 26px var(--red-glow));
+  animation:float 5s ease-in-out infinite}
+.biohazard-wrap::after{content:"";position:absolute;inset:-14px;border-radius:50%;
+  background:radial-gradient(circle,rgba(229,10,30,.16),transparent 70%);z-index:-1;
+  animation:glow 4s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes glow{0%,100%{opacity:.7}50%{opacity:1}}
+@media (min-width:901px){.biohazard-wrap{width:200px;height:200px}}
+@media (max-width:480px){.biohazard-wrap{width:150px;height:150px;margin-top:2px}}
+
+.product-name{font-family:var(--mono);font-size:clamp(26px,6vw,38px);font-weight:800;
+  letter-spacing:.18em;color:var(--red);text-shadow:0 0 30px var(--red-glow);text-align:center}
+.product-desc{color:var(--muted);text-align:center;font-size:14px;margin:10px 0 26px;max-width:380px;line-height:1.7}
+
+/* ---------- Forms ---------- */
+.field{width:100%;margin-bottom:14px;position:relative}
+.field label{display:block;font-size:12px;color:var(--muted);margin-bottom:7px;letter-spacing:.02em}
+.field input,.field textarea,.field select{
+  width:100%;background:var(--panel);border:1px solid var(--line);border-radius:12px;
+  padding:13px 14px;font-size:15px;color:var(--txt);outline:none;transition:border-color .2s,box-shadow .2s;
+  min-height:48px}
+.field input:focus,.field textarea:focus,.field select:focus{
+  border-color:var(--red-soft);box-shadow:0 0 0 3px var(--red-dim)}
+.field input::placeholder,.field textarea::placeholder{color:var(--muted2)}
+.field .eye-toggle{position:absolute;top:34px;inset-inline-end:8px;width:38px;height:38px;
+  display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:16px;border-radius:8px}
+.field .eye-toggle:hover{color:var(--txt)}
+.field .eye-toggle svg{width:20px;height:20px}
+.field--inline{display:flex;gap:10px}
+.field--inline .field{flex:1}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;
+  padding:14px 18px;border-radius:12px;font-size:15px;font-weight:600;min-height:48px;
+  transition:transform .15s var(--ease),background .2s,box-shadow .2s;position:relative}
+.btn:active{transform:scale(.98)}
+.btn--primary{background:linear-gradient(135deg,var(--red-soft),var(--red));color:#fff;
+  box-shadow:0 8px 24px rgba(229,10,30,.35)}
+.btn--primary:hover{box-shadow:0 10px 30px rgba(229,10,30,.5)}
+.btn--primary:disabled{opacity:.55;cursor:not-allowed}
+.btn--ghost{background:rgba(255,255,255,.04);border:1px solid var(--line);color:var(--muted)}
+.btn--ghost:hover{color:var(--txt);background:rgba(255,255,255,.07)}
+.btn--small{padding:9px 12px;min-height:38px;font-size:13px;width:auto}
+.btn--icon{width:38px;height:38px;padding:0;min-height:38px}
+.btn--danger{background:rgba(229,10,30,.12);color:var(--red-soft);border:1px solid rgba(229,10,30,.3)}
+
+.attempts{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:16px;
+  font-size:12px;color:var(--muted);font-family:var(--mono);letter-spacing:.04em}
+.attempts .dots{display:flex;gap:6px}
+.attempts .dot{width:8px;height:8px;border-radius:50%;background:var(--line);border:1px solid var(--muted2)}
+.attempts .dot.used{background:var(--red);border-color:var(--red);box-shadow:0 0 8px var(--red-glow)}
+
+.lock-msg{text-align:center;padding:20px;margin-top:10px}
+.lock-msg .lock-icon{font-size:40px;color:var(--red);margin-bottom:10px}
+.lock-msg h3{font-size:18px;margin-bottom:8px}
+.lock-msg p{color:var(--muted);font-size:13px;line-height:1.7}
+
+/* ---------- Vault screen ---------- */
+.vault-top{display:flex;align-items:center;gap:12px;margin:6px 0 20px;flex-wrap:wrap}
+.vault-top h1{font-size:20px;font-weight:700;flex:1;min-width:140px}
+.search-wrap{position:relative;flex:1;min-width:200px;max-width:340px}
+.search-wrap input{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:12px;
+  padding:11px 14px;padding-inline-start:38px;font-size:14px;outline:none;min-height:44px}
+.search-wrap input:focus{border-color:var(--red-soft)}
+.search-wrap .search-ico{position:absolute;inset-inline-start:12px;top:50%;transform:translateY(-50%);
+  color:var(--muted2);font-size:15px}
+.vault-actions{display:flex;gap:8px}
+.vault-actions .btn{width:auto}
+
+.status-pill{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10px;
+  letter-spacing:.16em;color:var(--muted);border:1px solid var(--line);padding:6px 12px;border-radius:999px;background:var(--panel)}
+.status-pill .pulse{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+.cards-grid{display:grid;grid-template-columns:1fr;gap:14px}
+@media (min-width:600px){.cards-grid{grid-template-columns:repeat(2,1fr)}}
+@media (min-width:901px){.cards-grid{grid-template-columns:repeat(3,1fr)}}
+
+.vault-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:16px;display:flex;flex-direction:column;gap:12px;transition:transform .2s var(--ease),border-color .2s,opacity .3s;
+  animation:cardIn .4s var(--ease) both}
+@keyframes cardIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.vault-card:hover{border-color:rgba(229,10,30,.35);transform:translateY(-2px)}
+.vault-card__head{display:flex;align-items:center;gap:11px}
+.vault-card__ico{width:42px;height:42px;border-radius:11px;background:var(--red-dim);border:1px solid rgba(229,10,30,.2);
+  display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--red-soft);flex-shrink:0}
+.vault-card__name{font-weight:600;font-size:15px;flex:1;line-height:1.3;word-break:break-word}
+.vault-card__user{font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:6px;word-break:break-all}
+.vault-card__pw{display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.35);border:1px solid var(--line);
+  border-radius:10px;padding:9px 12px;font-family:var(--mono);font-size:13px;color:var(--muted)}
+.vault-card__pw .pw-text{flex:1;letter-spacing:.08em;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.vault-card__pw .pw-text.revealed{letter-spacing:.02em;color:var(--txt)}
+.vault-card__meta{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.vault-card__site{font-size:12px;color:var(--red-soft);display:inline-flex;align-items:center;gap:5px;word-break:break-all}
+.vault-card__date{font-size:11px;color:var(--muted2)}
+.vault-card__btns{display:flex;gap:6px;margin-top:2px}
+.vault-card__btns .btn--small{flex:1;justify-content:center}
+
+.empty-vault{text-align:center;padding:50px 20px;animation:cardIn .4s var(--ease)}
+.empty-vault img{width:90px;height:90px;margin:0 auto 20px;display:block;opacity:.85;
+  filter:drop-shadow(0 0 18px var(--red-glow));animation:float 5s ease-in-out infinite}
+.empty-vault h3{font-size:17px;margin-bottom:8px}
+.empty-vault p{color:var(--muted);font-size:13px;margin-bottom:22px}
+.empty-vault .btn{max-width:260px;margin:0 auto}
+
+/* ---------- Modal / bottom sheet ---------- */
+.modal-overlay{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.7);
+  display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);
+  animation:fadeIn .25s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal{background:var(--panel);border:1px solid var(--line);border-radius:20px 20px 0 0;
+  width:100%;max-height:92vh;overflow-y:auto;padding:22px 20px calc(env(safe-area-inset-bottom,0px) + 22px);
+  animation:sheetUp .3s var(--ease)}
+@keyframes sheetUp{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+@media (min-width:600px){
+  .modal-overlay{align-items:center;padding:20px}
+  .modal{border-radius:20px;max-width:520px;max-height:88vh}
+}
+.modal__head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.modal__head h2{font-size:18px}
+.modal__close{width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,.05);
+  display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--muted)}
+.modal__close:hover{color:var(--txt)}
+.modal__actions{display:flex;gap:10px;margin-top:6px}
+.modal__actions .btn{flex:1}
+
+/* ---------- Password check ---------- */
+.check-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:22px;max-width:560px;margin:0 auto 30px}
+.check-card h2{font-size:18px;margin-bottom:6px}
+.check-card .check-sub{color:var(--muted);font-size:13px;margin-bottom:18px;line-height:1.6}
+.strength-bar{display:flex;gap:6px;margin-top:16px}
+.strength-bar .seg{flex:1;height:6px;border-radius:4px;background:rgba(255,255,255,.08);transition:background .3s}
+.strength-bar .seg.weak{background:var(--red)}
+.strength-bar .seg.mid{background:var(--amber)}
+.strength-bar .seg.strong{background:var(--green)}
+.strength-label{display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-size:13px}
+.strength-label .lvl{font-weight:600}
+.check-result{margin-top:14px;padding:12px 14px;border-radius:10px;font-size:13px;line-height:1.7;display:none}
+.check-result.show{display:block;animation:cardIn .3s var(--ease)}
+.check-result.ok{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:#86efac}
+.check-result.warn{background:rgba(229,10,30,.1);border:1px solid rgba(229,10,30,.3);color:#fca5a5}
+.check-result.info{background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--muted)}
+.privacy-note{display:flex;align-items:flex-start;gap:8px;margin-top:14px;font-size:11.5px;color:var(--muted2);line-height:1.6}
+
+/* ---------- Drawer ---------- */
+.drawer-overlay{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.6);backdrop-filter:blur(3px);
+  animation:fadeIn .25s ease}
+.drawer{position:fixed;top:0;bottom:0;z-index:71;width:min(300px,88vw);background:#0a0a0c;
+  border-inline-start:1px solid var(--line);display:flex;flex-direction:column;
+  transition:transform .35s var(--ease);padding:calc(env(safe-area-inset-top,0px) + 18px) 16px
+  calc(env(safe-area-inset-bottom,0px) + 18px)}
+[dir="rtl"] .drawer{right:0;transform:translateX(105%)}
+[dir="ltr"] .drawer{left:0;transform:translateX(-105%)}
+.drawer.open{transform:none}
+.drawer__brand{display:flex;align-items:center;gap:12px;padding:6px 8px 18px;border-bottom:1px solid var(--line);margin-bottom:14px}
+.drawer__brand img{height:38px;width:auto}
+.drawer__brand .db-name{font-weight:700;font-size:15px}
+.drawer__brand .db-status{font-size:11px;color:var(--muted);font-family:var(--mono);letter-spacing:.06em}
+.drawer__nav{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:2px}
+.drawer__item{display:flex;align-items:center;gap:12px;padding:13px 12px;border-radius:11px;
+  font-size:14px;color:var(--muted);transition:background .2s,color .2s;width:100%;text-align:start}
+.drawer__item:hover{background:rgba(255,255,255,.05);color:var(--txt)}
+.drawer__item.active{background:var(--red-dim);color:var(--red-soft);font-weight:600}
+.drawer__item .di-ico{width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.drawer__item .di-ico svg{width:19px;height:19px}
+.drawer__sep{height:1px;background:var(--line);margin:10px 8px}
+.drawer__foot{margin-top:12px;padding-top:14px;border-top:1px solid var(--line)}
+.drawer__lang{margin-top:10px}
+
+/* ---------- Toast ---------- */
+#toast{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 22px);left:50%;transform:translateX(-50%) translateY(20px);
+  background:#161618;border:1px solid var(--line);color:var(--txt);padding:12px 20px;border-radius:12px;
+  font-size:13px;z-index:90;opacity:0;pointer-events:none;transition:all .3s var(--ease);box-shadow:0 10px 30px rgba(0,0,0,.5);
+  max-width:90vw;text-align:center}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.toast-error{border-color:rgba(229,10,30,.5)}
+
+/* ---------- Loading ---------- */
+.loading-overlay{position:fixed;inset:0;z-index:80;background:rgba(3,3,3,.92);display:flex;
+  flex-direction:column;align-items:center;justify-content:center;gap:18px;backdrop-filter:blur(6px)}
+.loading-overlay .spin{width:44px;height:44px;border-radius:50%;border:3px solid var(--line);
+  border-top-color:var(--red);animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-overlay p{color:var(--muted);font-size:13px;letter-spacing:.03em}
+
+/* ---------- Misc ---------- */
+.footer{text-align:center;color:var(--muted2);font-size:11px;padding:20px 0 30px;letter-spacing:.04em}
+.section-title{font-size:16px;font-weight:700;margin:0 0 16px;display:flex;align-items:center;gap:8px}
+.section-title .st-ico{color:var(--red-soft)}
+.back-row{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+.back-row .btn--icon{border:1px solid var(--line);background:var(--panel)}
+
+[dir="ltr"] .product-name{letter-spacing:.2em}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
+}
+</style>
+</head>
+<body class="redlock-page">
+<canvas id="binary-rain" aria-hidden="true"></canvas>
+<div class="noise-layer" aria-hidden="true"></div>
+<div class="vignette" aria-hidden="true"></div>
+
+<div class="app" id="app">
+
+  <!-- ================= ACCESS / UNLOCK SCREEN ================= -->
+  <section class="screen" data-screen="access">
+    <header class="site-header">
+      <button id="menu-toggle" class="menu-toggle" type="button" aria-expanded="false" aria-controls="drawer" data-i18n-aria="menuOpen"><span></span><span></span><span></span></button>
+      <p class="header-eyebrow" data-i18n="eyebrow">LOCAL VAULT / UNLOCK</p>
+      <a class="header-alansari" href="#main-content" aria-label="Alansari.Tech"><img src="assets/alansari-tech-logo-red-white.png" alt="Alansari.Tech" /></a>
+    </header>
+
+    <div class="biohazard-wrap"><img src="assets/personal-biohazard-mark.png" alt="" /></div>
+    <h1 class="product-name">CIPHERVAULT</h1>
+    <p class="product-desc" data-i18n="accessDesc">أدخل كلمة المرور الرئيسية للوصول إلى خزنتك.</p>
+
+    <form id="access-form" style="width:100%">
+      <div class="field">
+        <label data-i18n="pwLabel">كلمة المرور الرئيسية</label>
+        <input type="password" id="master-pw" autocomplete="current-password" data-i18n-ph="pwPlaceholder" placeholder="أدخل كلمة المرور الرئيسية" />
+        <button type="button" class="eye-toggle" data-eye="master-pw" aria-label="إظهار/إخفاء"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+      </div>
+      <div class="field hidden" id="confirm-field">
+        <label data-i18n="confirmLabel">تأكيد كلمة المرور الرئيسية</label>
+        <input type="password" id="confirm-pw" autocomplete="new-password" data-i18n-ph="confirmPlaceholder" placeholder="أعد إدخال كلمة المرور" />
+        <button type="button" class="eye-toggle" data-eye="confirm-pw" aria-label="إظهار/إخفاء"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+      </div>
+      <button type="submit" class="btn btn--primary" id="access-btn" data-i18n="accessBtn">فتح الخزنة</button>
+    </form>
+
+    <div class="attempts hidden" id="attempts">
+      <span data-i18n="attemptsLabel">متبقي</span>
+      <span class="dots" id="attempt-dots"></span>
+      <span data-i18n="attemptsBefore">محاولات قبل قفل الوصول</span>
+    </div>
+    <p class="attempts" style="margin-top:14px;font-family:var(--font);letter-spacing:0;font-size:12px">
+      <span data-i18n="localNote">تظل بياناتك مشفرة محليا على هذا الجهاز. بعد 3 محاولات خاطئة يقفل.</span>
+    </p>
+
+    <div class="lock-msg hidden" id="lock-msg">
+      <div class="lock-icon">🔒</div>
+      <h3 data-i18n="lockTitle">تم قفل الوصول مؤقتا</h3>
+      <p data-i18n="lockDesc">بسبب عدة محاولات خاطئة، تم قفل الخزنة لمدة 15 دقيقة. حاول مرة أخرى لاحقا.</p>
+    </div>
+
+    <footer class="footer">Alansari.Tech · <span data-i18n="footerTag">AES-256 / محلي فقط · ٣ محاولات كحد أقصى</span></footer>
+  </section>
+
+  <!-- ================= VAULT SCREEN ================= -->
+  <section class="screen screen--wide hidden" data-screen="vault">
+    <header class="site-header">
+      <button id="menu-toggle2" class="menu-toggle" type="button" aria-expanded="false" aria-controls="drawer" data-i18n-aria="menuOpen"><span></span><span></span><span></span></button>
+      <p class="header-eyebrow" data-i18n="vaultEyebrow">LOCAL / ENCRYPTED</p>
+      <img src="assets/alansari-tech-logo-red-white.png" alt="Alansari.Tech" style="height:34px;width:auto" />
+    </header>
+
+    <div class="vault-top">
+      <h1 data-i18n="myVault">خزنتي</h1>
+      <div class="search-wrap">
+        <span class="search-ico">⌕</span>
+        <input type="text" id="search" data-i18n-ph="searchPh" placeholder="بحث في الحسابات..." />
+      </div>
+      <div class="vault-actions">
+        <button class="btn btn--ghost btn--small" id="btn-check" data-i18n="checkPw">فحص كلمة المرور</button>
+        <button class="btn btn--primary btn--small" id="btn-add" data-i18n="addAccount">+ إضافة حساب</button>
+      </div>
+    </div>
+
+    <div id="vault-content"></div>
+
+    <footer class="footer">CIPHERVAULT · Alansari.Tech</footer>
+  </section>
+
+  <!-- ================= PASSWORD CHECK SCREEN ================= -->
+  <section class="screen hidden" data-screen="check">
+    <header class="site-header">
+      <button id="menu-toggle3" class="menu-toggle" type="button" aria-expanded="false" aria-controls="drawer" data-i18n-aria="menuOpen"><span></span><span></span><span></span></button>
+      <p class="header-eyebrow">PASSWORD CHECK</p>
+      <img src="assets/alansari-tech-logo-red-white.png" alt="Alansari.Tech" style="height:34px;width:auto" />
+    </header>
+
+    <div class="back-row">
+      <button class="btn btn--icon" id="btn-back-check" data-i18n-aria="back" aria-label="رجوع">←</button>
+      <h1 style="font-size:20px" data-i18n="checkPw">فحص كلمة المرور</h1>
+    </div>
+
+    <div class="check-card">
+      <h2 data-i18n="checkTitle">فحص كلمة المرور</h2>
+      <p class="check-sub" data-i18n="checkSub">تحقق من قوة كلمة المرور ومن وجودها في تسريبات معروفة، دون إرسالها كاملة إلى أي خادم.</p>
+      <div class="field" style="margin-bottom:0">
+        <input type="password" id="check-pw" data-i18n-ph="checkPwPh" placeholder="أدخل كلمة المرور للفحص" />
+        <button type="button" class="eye-toggle" data-eye="check-pw" aria-label="إظهار/إخفاء"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+      </div>
+      <button class="btn btn--primary" id="btn-check-now" style="margin-top:16px" data-i18n="checkNow">فحص الآن</button>
+      <div class="strength-bar hidden" id="strength-bar">
+        <div class="seg"></div><div class="seg"></div><div class="seg"></div><div class="seg"></div>
+      </div>
+      <div class="strength-label hidden" id="strength-label">
+        <span data-i18n="strength">القوة:</span><span class="lvl" id="strength-lvl"></span>
+      </div>
+      <div class="check-result" id="check-result"></div>
+      <div class="privacy-note">
+        <span>🔒</span>
+        <span data-i18n="privacyNote">يتم تنفيذ الفحص بأقل قدر ممكن من كشف البيانات: نرسل فقط الجزء الأول من بصمة كلمة المرور، ولا نحفظها أبدا.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= DRAWER ================= -->
+  <div class="drawer-overlay hidden" id="drawer-overlay"></div>
+  <aside class="drawer" id="drawer" aria-hidden="true">
+    <div class="drawer__brand">
+      <img src="assets/alansari-tech-icon.png" alt="Alansari.Tech" />
+      <div>
+        <div class="db-name">CipherVault</div>
+        <div class="db-status" data-i18n="drawerStatus">خزنة محلية مشفرة</div>
+      </div>
+    </div>
+    <nav class="drawer__nav">
+      <button class="drawer__item active" data-nav="vault" data-i18n="home">الرئيسية</button>
+      <button class="drawer__item" data-nav="add" data-i18n="addAccount">إضافة حساب</button>
+      <button class="drawer__item" data-nav="check" data-i18n="checkPw">فحص كلمة المرور</button>
+      <button class="drawer__item" data-nav="import" data-i18n="import">استيراد نسخة مشفرة</button>
+      <button class="drawer__item" data-nav="export" data-i18n="export">تصدير نسخة مشفرة</button>
+      <button class="drawer__item" data-nav="biometric" data-i18n="biometric">تفعيل البصمة لهذا الجهاز</button>
+      <button class="drawer__item" data-nav="install" data-i18n="install">تثبيت التطبيق</button>
+      <div class="drawer__sep"></div>
+      <a class="drawer__item" href="https://t.me/alansari_tech" target="_blank" rel="noopener noreferrer"><span class="di-ico">✈</span>Telegram</a>
+      <a class="drawer__item" href="https://www.instagram.com/alansari.tech?stkn=c2JhdG1zbTYzdm4z" target="_blank" rel="noopener noreferrer"><span class="di-ico">◉</span>Instagram</a>
+      <div class="drawer__foot">
+        <button class="drawer__item" id="btn-lock" data-i18n="lock">قفل الخزنة</button>
+        <button class="drawer__item drawer__lang" id="btn-lang" data-i18n="lang">English / العربية</button>
+      </div>
+    </nav>
+  </aside>
+
+</div>
+
+<div id="toast" role="status"></div>
+<div class="loading-overlay hidden" id="loading">
+  <div class="spin"></div>
+  <p id="loading-text" data-i18n="opening">جار فتح الخزنة المشفرة...</p>
+</div>
+
+<script>
+"use strict";
+/* ============================================================
+   CIPHERVAULT — client-side encrypted local vault
+   AES-256-GCM + PBKDF2-SHA256 (600k iterations) · localStorage
+   No server. Master password has NO recovery.
+   ============================================================ */
+
+/* ---------------- i18n ---------------- */
+const I18N = {
+  ar: {
+    eyebrow:"LOCAL VAULT / UNLOCK", vaultEyebrow:"LOCAL / ENCRYPTED",
+    accessDesc:"أدخل كلمة المرور الرئيسية للوصول إلى خزنتك.",
+    createDesc:"أنشئ كلمة مرور رئيسية قوية لحماية خزنتك.",
+    pwLabel:"كلمة المرور الرئيسية", confirmLabel:"تأكيد كلمة المرور الرئيسية",
+    pwPlaceholder:"أدخل كلمة المرور الرئيسية", confirmPlaceholder:"أعد إدخال كلمة المرور",
+    accessBtn:"فتح الخزنة", createBtn:"إنشاء الخزنة",
+    attemptsLabel:"متبقي", attemptsBefore:"محاولات قبل قفل الوصول",
+    localNote:"تظل بياناتك مشفرة محليا على هذا الجهاز. بعد 3 محاولات خاطئة يقفل.",
+    lockTitle:"تم قفل الوصول مؤقتا",
+    lockDesc:"بسبب عدة محاولات خاطئة، تم قفل الخزنة لمدة 15 دقيقة. حاول مرة أخرى لاحقا.",
+    footerTag:"AES-256 / محلي فقط · ٣ محاولات كحد أقصى",
+    myVault:"خزنتي", searchPh:"بحث في الحسابات...",
+    addAccount:"+ إضافة حساب", checkPw:"فحص كلمة المرور",
+    checkTitle:"فحص كلمة المرور",
+    checkSub:"تحقق من قوة كلمة المرور ومن وجودها في تسريبات معروفة، دون إرسالها كاملة إلى أي خادم.",
+    checkPwPh:"أدخل كلمة المرور للفحص", checkNow:"فحص الآن",
+    strength:"القوة:",
+    privacyNote:"يتم تنفيذ الفحص بأقل قدر ممكن من كشف البيانات: نرسل فقط الجزء الأول من بصمة كلمة المرور، ولا نحفظها أبدا.",
+    drawerStatus:"خزنة محلية مشفرة", home:"الرئيسية",
+    import:"استيراد نسخة مشفرة", export:"تصدير نسخة مشفرة",
+    biometric:"تفعيل البصمة لهذا الجهاز", install:"تثبيت التطبيق",
+    lock:"قفل الخزنة", lang:"English / العربية",
+    opening:"جار فتح الخزنة المشفرة...", creating:"جار إنشاء الخزنة المشفرة...",
+    emptyTitle:"لا توجد حسابات محفوظة بعد", emptyDesc:"أضف أول حساب لتخزينه مشفرا على جهازك.",
+    emptyBtn:"+ إضافة حساب", noResults:"لا توجد نتائج مطابقة لبحثك.",
+    addTitle:"إضافة حساب جديد", editTitle:"تعديل الحساب",
+    svcName:"اسم الخدمة", svcUser:"اسم المستخدم أو البريد", svcPw:"كلمة المرور",
+    svcUrl:"رابط الموقع", svcNotes:"ملاحظات اختيارية", svcCat:"تصنيف اختياري",
+    save:"حفظ الحساب", cancel:"إلغاء", delete:"حذف",
+    copied:"تم النسخ", copyUser:"نسخ اسم المستخدم", copyPw:"نسخ كلمة المرور",
+    show:"إظهار", hide:"إخفاء",
+    pwWeak:"ضعيفة", pwMid:"متوسطة", pwStrong:"قوية", pwVStrong:"قوية جدا",
+    leakFound:"تم العثور على كلمة المرور في تسريبات معروفة. يُنصح بشدة بتغييرها.",
+    leakSafe:"لم يتم العثور على كلمة المرور في التسريبات المعروفة.",
+    pwLenNote:"كلمة المرور قصيرة جدا (أقل من 8 أحرف).",
+    wrongPw:"كلمة المرور غير صحيحة. حاول مرة أخرى.",
+    pwMismatch:"كلمتا المرور غير متطابقتين.",
+    pwShort:"يجب أن تكون كلمة المرور 12 حرفا على الأقل.",
+    locked:"تم قفل الوصول. حاول بعد 15 دقيقة.",
+    exportAsk:"أدخل كلمة المرور الرئيسية لتأكيد التصدير.",
+    exportOk:"تم تصدير النسخة المشفرة.", exportErr:"كلمة المرور غير صحيحة.",
+    importAsk:"اختر ملف النسخة المشفرة وأدخل كلمة مرور النسخة.",
+    importOk:"تم استيراد النسخة بنجاح.", importErr:"فشل الاستيراد: ملف أو كلمة مرور غير صحيحة.",
+    importConfirm:"سيتم استبدال البيانات الحالية بنسخة الاستيراد. متابعة؟",
+    bioTitle:"فتح أسرع بهذا الجهاز",
+    bioDesc:"استخدم البصمة أو Face ID بعد تفعيلها بكلمة المرور الرئيسية.",
+    bioBtn:"تفعيل البصمة لهذا الجهاز", bioOk:"تم تفعيل البصمة لهذا الجهاز.",
+    bioUnsupported:"هذا الجهاز أو المتصفح لا يدعم هذه الميزة.",
+    installBtn:"تثبيت التطبيق", installOk:"تم تثبيت التطبيق.",
+    installUnsupported:"المتصفح لا يدعم التثبيت هنا.",
+    confirmLock:"قفل الخزنة وإخفاء كل البيانات؟",
+    yes:"نعم", no:"لا",
+    lastEdit:"آخر تعديل", copiedUser:"تم نسخ اسم المستخدم", copiedPw:"تم نسخ كلمة المرور",
+    confirmDelete:"حذف هذا الحساب نهائيا؟",
+    deleted:"تم حذف الحساب.", saved:"تم حفظ الحساب.",
+    fillRequired:"يرجى تعبئة الحقول المطلوبة.",
+    unlock:"فتح الخزنة", create:"إنشاء الخزنة"
+  },
+  en: {
+    eyebrow:"LOCAL VAULT / UNLOCK", vaultEyebrow:"LOCAL / ENCRYPTED",
+    accessDesc:"Enter your master password to access your vault.",
+    createDesc:"Create a strong master password to protect your vault.",
+    pwLabel:"Master password", confirmLabel:"Confirm master password",
+    pwPlaceholder:"Enter master password", confirmPlaceholder:"Confirm master password",
+    accessBtn:"Unlock Vault", createBtn:"Create Vault",
+    attemptsLabel:"", attemptsBefore:"attempts available",
+    localNote:"Your data stays encrypted locally on this device. Locks after 3 wrong attempts.",
+    lockTitle:"Access locked temporarily",
+    lockDesc:"Too many wrong attempts. The vault is locked for 15 minutes. Try again later.",
+    footerTag:"AES-256 / Local only · Max 3 attempts",
+    myVault:"My Vault", searchPh:"Search accounts...",
+    addAccount:"+ Add Account", checkPw:"Password Check",
+    checkTitle:"Password Check",
+    checkSub:"Check password strength and known breaches without sending the full password to any server.",
+    checkPwPh:"Enter a password to check", checkNow:"Check Now",
+    strength:"Strength:",
+    privacyNote:"The check exposes the minimum: we send only the first part of the password's fingerprint and never store it.",
+    drawerStatus:"Local encrypted vault", home:"Home",
+    import:"Import Encrypted Backup", export:"Export Encrypted Backup",
+    biometric:"Enable Biometric", install:"Install App",
+    lock:"Lock Vault", lang:"العربية / English",
+    opening:"Opening encrypted vault...", creating:"Creating encrypted vault...",
+    emptyTitle:"No accounts saved yet", emptyDesc:"Add your first account to store it encrypted on this device.",
+    emptyBtn:"+ Add Account", noResults:"No results match your search.",
+    addTitle:"Add New Account", editTitle:"Edit Account",
+    svcName:"Service name", svcUser:"Username or email", svcPw:"Password",
+    svcUrl:"Site URL", svcNotes:"Optional notes", svcCat:"Optional category",
+    save:"Save Account", cancel:"Cancel", delete:"Delete",
+    copied:"Copied", copyUser:"Copy username", copyPw:"Copy password",
+    show:"Show", hide:"Hide",
+    pwWeak:"Weak", pwMid:"Medium", pwStrong:"Strong", pwVStrong:"Very strong",
+    leakFound:"This password was found in known breaches. Strongly recommended to change it.",
+    leakSafe:"This password was not found in known breaches.",
+    pwLenNote:"Password is too short (fewer than 8 characters).",
+    wrongPw:"Incorrect master password. Try again.",
+    pwMismatch:"Passwords do not match.",
+    pwShort:"Password must be at least 12 characters.",
+    locked:"Access locked. Try again in 15 minutes.",
+    exportAsk:"Enter your master password to confirm export.",
+    exportOk:"Encrypted backup exported.", exportErr:"Incorrect password.",
+    importAsk:"Choose the encrypted backup file and enter its password.",
+    importOk:"Backup imported successfully.", importErr:"Import failed: invalid file or password.",
+    importConfirm:"This will replace current data with the backup. Continue?",
+    bioTitle:"Open faster on this device",
+    bioDesc:"Use fingerprint or Face ID after enabling with your master password.",
+    bioBtn:"Enable Biometric", bioOk:"Biometric enabled for this device.",
+    bioUnsupported:"This device or browser does not support this feature.",
+    installBtn:"Install App", installOk:"App installed.",
+    installUnsupported:"This browser does not support installation here.",
+    confirmLock:"Lock vault and hide all data?",
+    yes:"Yes", no:"No",
+    lastEdit:"Last modified", copiedUser:"Username copied", copiedPw:"Password copied",
+    confirmDelete:"Delete this account permanently?",
+    deleted:"Account deleted.", saved:"Account saved.",
+    fillRequired:"Please fill the required fields.",
+    unlock:"Unlock Vault", create:"Create Vault"
+  }
+};
+let lang = "ar";
+function t(k){return (I18N[lang]&&I18N[lang][k])||I18N.ar[k]||k;}
+function applyLang(){
+  document.documentElement.lang = lang;
+  document.documentElement.dir = lang==="ar" ? "rtl" : "ltr";
+  document.querySelectorAll("[data-i18n]").forEach(el=>{const k=el.getAttribute("data-i18n");el.textContent=t(k);});
+  document.querySelectorAll("[data-i18n-ph]").forEach(el=>{el.setAttribute("placeholder",t(el.getAttribute("data-i18n-ph")));});
+  document.querySelectorAll("[data-i18n-aria]").forEach(el=>{el.setAttribute("aria-label",t(el.getAttribute("data-i18n-aria")));});
+}
+
+/* ---------------- Storage keys ---------------- */
+const CFG_KEY="cv.cfg"; const VAULT_KEY="cv.vault"; const LOCK_KEY="cv.lock";
+const ITER=600000; const SENTINEL="CIPHERVAULT_OK";
+
+/* ---------------- Crypto ---------------- */
+function bufToB64(buf){const b=new Uint8Array(buf);let s="";for(let i=0;i<b.length;i++)s+=String.fromCharCode(b[i]);return btoa(s);}
+function b64ToBuf(b64){const s=atob(b64);const b=new Uint8Array(s.length);for(let i=0;i<s.length;i++)b[i]=s.charCodeAt(i);return b.buffer;}
+function randBytes(n){const a=new Uint8Array(n);crypto.getRandomValues(a);return a.buffer;}
+async function deriveKey(pw,salt){
+  const enc=new TextEncoder();
+  const km=await crypto.subtle.importKey("raw",enc.encode(pw),"PBKDF2",false,["deriveBits"]);
+  const bits=await crypto.subtle.deriveBits({name:"PBKDF2",salt,iterations:ITER,hash:"SHA-256"},km,256);
+  return crypto.subtle.importKey("raw",bits,"AES-GCM",false,["encrypt","decrypt"]);
+}
+async function encrypt(key,plain){
+  const iv=randBytes(12);
+  const ct=await crypto.subtle.encrypt({name:"AES-GCM",iv},key,new TextEncoder().encode(plain));
+  return {iv:bufToB64(iv),ct:bufToB64(ct)};
+}
+async function decrypt(key,env){
+  const pt=await crypto.subtle.decrypt({name:"AES-GCM",iv:b64ToBuf(env.iv)},key,b64ToBuf(env.ct));
+  return new TextDecoder().decode(pt);
+}
+
+let state={cfg:null,vault:null,key:null};
+
+function loadCfg(){try{return JSON.parse(localStorage.getItem(CFG_KEY));}catch(e){return null;}}
+function saveCfg(c){localStorage.setItem(CFG_KEY,JSON.stringify(c));}
+
+/* ---------------- Lockout ---------------- */
+function getLock(){try{return JSON.parse(localStorage.getItem(LOCK_KEY));}catch(e){return null;}}
+function setLock(o){localStorage.setItem(LOCK_KEY,JSON.stringify(o));}
+function isLocked(){
+  const l=getLock();
+  if(!l||!l.until)return false;
+  if(Date.now()>=l.until){setLock(null);return false;}
+  return true;
+}
+
+/* ---------------- Setup / Unlock ---------------- */
+async function setupVault(pw){
+  const salt=randBytes(16);
+  const key=await deriveKey(pw,salt);
+  const verifier=await encrypt(key,SENTINEL);
+  const cfg={version:1,salt:bufToB64(salt),iterations:ITER,verifier};
+  const env=await encrypt(key,JSON.stringify({entries:[]}));
+  saveCfg(cfg);
+  localStorage.setItem(VAULT_KEY,JSON.stringify(env));
+  state={cfg,vault:{entries:[]},key};
+  return true;
+}
+async function tryUnlock(pw){
+  const cfg=loadCfg();
+  if(!cfg)return {ok:false,code:"nocfg"};
+  const key=await deriveKey(pw,b64ToBuf(cfg.salt));
+  let sentinel;
+  try{sentinel=await decrypt(key,cfg.verifier);}catch(e){return {ok:false,code:"wrong"};}
+  if(sentinel!==SENTINEL)return {ok:false,code:"wrong"};
+  const raw=localStorage.getItem(VAULT_KEY);
+  let vault={entries:[]};
+  if(raw){
+    try{vault=JSON.parse(await decrypt(key,JSON.parse(raw)));}catch(e){vault={entries:[]};}
+    if(!vault||!Array.isArray(vault.entries))vault={entries:[]};
+  }
+  state={cfg,vault,key};
+  return {ok:true};
+}
+async function persistVault(){
+  if(!state.key)return;
+  const env=await encrypt(state.key,JSON.stringify(state.vault));
+  localStorage.setItem(VAULT_KEY,JSON.stringify(env));
+}
+
+/* ---------------- UI helpers ---------------- */
+const $=s=>document.querySelector(s);
+const $$=s=>document.querySelectorAll(s);
+function showScreen(name){
+  $$(".screen").forEach(s=>s.classList.toggle("hidden",s.dataset.screen!==name));
+  $$(".drawer__item[data-nav]").forEach(i=>i.classList.toggle("active",i.dataset.nav===name));
+  window.scrollTo(0,0);
+}
+function toast(msg,err){
+  const el=$("#toast");
+  el.textContent=msg;
+  el.classList.toggle("toast-error",!!err);
+  el.classList.add("show");
+  clearTimeout(el._t);
+  el._t=setTimeout(()=>el.classList.remove("show"),2200);
+}
+function showLoading(txt){
+  $("#loading-text").textContent=txt||t("opening");
+  $("#loading").classList.remove("hidden");
+}
+function hideLoading(){$("#loading").classList.add("hidden");}
+function openDrawer(){$("#drawer").classList.add("open");$("#drawer-overlay").classList.remove("hidden");$("#drawer").setAttribute("aria-hidden","false");}
+function closeDrawer(){$("#drawer").classList.remove("open");$("#drawer-overlay").classList.add("hidden");$("#drawer").setAttribute("aria-hidden","true");}
+
+/* ---------------- Access screen logic ---------------- */
+function renderAccess(){
+  const cfg=loadCfg();
+  const creating=!cfg;
+  $("#confirm-field").classList.toggle("hidden",!creating);
+  $("#access-btn").textContent=creating?t("createBtn"):t("accessBtn");
+  $(".product-desc").textContent=creating?t("createDesc"):t("accessDesc");
+  $("#master-pw").value="";$("#confirm-pw").value="";
+  $("#access-form").classList.remove("hidden");
+  $("#lock-msg").classList.add("hidden");
+  if(isLocked()){
+    $("#access-form").classList.add("hidden");
+    $("#lock-msg").classList.remove("hidden");
+    $("#attempts").classList.add("hidden");
+    return;
+  }
+  const l=getLock();
+  const used=l?l.attempts:0;
+  if(creating){
+    $("#attempts").classList.add("hidden");
+  }else{
+    $("#attempts").classList.remove("hidden");
+    const dots=$("#attempt-dots");dots.innerHTML="";
+    for(let i=0;i<3;i++){const d=document.createElement("span");d.className="dot"+(i<used?" used":"");dots.appendChild(d);}
+  }
+}
+
+async function handleAccess(e){
+  e.preventDefault();
+  if(isLocked()){toast(t("locked"),true);renderAccess();return;}
+  const pw=$("#master-pw").value;
+  if(!pw){toast(t("fillRequired"),true);return;}
+  const cfg=loadCfg();
+  if(!cfg){
+    const cf=$("#confirm-pw").value;
+    if(pw.length<12){toast(t("pwShort"),true);return;}
+    if(pw!==cf){toast(t("pwMismatch"),true);return;}
+    showLoading(t("creating"));
+    try{await setupVault(pw);hideLoading();enterVault();}
+    catch(err){hideLoading();toast(t("wrongPw"),true);}
+    return;
+  }
+  showLoading(t("opening"));
+  const res=await tryUnlock(pw);
+  hideLoading();
+  if(res.ok){setLock(null);enterVault();}
+  else{
+    let l=getLock()||{attempts:0};l.attempts=(l.attempts||0)+1;
+    if(l.attempts>=3){l.until=Date.now()+15*60*1000;l.attempts=3;}
+    setLock(l);
+    if(l.attempts>=3){toast(t("locked"),true);renderAccess();}
+    else{toast(t("wrongPw"),true);renderAccess();}
+  }
+}
+
+/* ---------------- Vault screen ---------------- */
+function enterVault(){
+  renderVault();
+  showScreen("vault");
+}
+function renderVault(){
+  const q=($("#search").value||"").trim().toLowerCase();
+  const entries=state.vault.entries;
+  const filtered=entries.filter(en=>
+    (en.name||"").toLowerCase().includes(q)||
+    (en.user||"").toLowerCase().includes(q)||
+    (en.cat||"").toLowerCase().includes(q));
+  const c=$("#vault-content");
+  if(!entries.length){
+    c.innerHTML=`<div class="empty-vault">
+      <img src="assets/personal-biohazard-mark.png" alt="" />
+      <h3>${t("emptyTitle")}</h3><p>${t("emptyDesc")}</p>
+      <button class="btn btn--primary" data-nav="add">${t("emptyBtn")}</button></div>`;
+    c.querySelector("[data-nav=add]").onclick=()=>openAdd();
+    return;
+  }
+  if(!filtered.length){
+    c.innerHTML=`<div class="empty-vault"><h3>${t("noResults")}</h3></div>`;
+    return;
+  }
+  c.innerHTML=`<div class="cards-grid">${filtered.map(en=>cardHTML(en)).join("")}</div>`;
+  c.querySelectorAll("[data-copy]").forEach(b=>b.onclick=()=>copyField(b.dataset.copy,b.dataset.type));
+  c.querySelectorAll("[data-eye-card]").forEach(b=>b.onclick=()=>toggleCardPw(b.dataset.eyeCard));
+  c.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>openAdd(b.dataset.edit));
+  c.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>delAccount(b.dataset.del));
+}
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));}
+function cardHTML(en){
+  const date=en.updated?new Date(en.updated).toLocaleDateString(lang==="ar"?"ar-EG":"en-US"):"";
+  const site=en.url?`<a class="vault-card__site" href="${esc(en.url)}" target="_blank" rel="noopener noreferrer">↗ ${esc(en.url)}</a>`:"";
+  return `<div class="vault-card" data-id="${esc(en.id)}">
+    <div class="vault-card__head">
+      <div class="vault-card__ico">${esc(en.cat||"🔑")}</div>
+      <div><div class="vault-card__name">${esc(en.name)}</div>
+      <div class="vault-card__user">@ ${esc(en.user)}</div></div>
+    </div>
+    <div class="vault-card__pw"><span class="pw-text" id="pw-${esc(en.id)}">••••••••</span>
+      <button class="btn btn--icon btn--small" data-eye-card="${esc(en.id)}" aria-label="${t("show")}">👁</button>
+      <button class="btn btn--icon btn--small" data-copy="${esc(en.id)}" data-type="pw" aria-label="${t("copyPw")}">⧉</button>
+    </div>
+    <div class="vault-card__meta">
+      <div>${site}</div>
+      <span class="vault-card__date">${date}</span>
+    </div>
+    <div class="vault-card__btns">
+      <button class="btn btn--ghost btn--small" data-copy="${esc(en.id)}" data-type="user">${t("copyUser")}</button>
+      <button class="btn btn--ghost btn--small" data-edit="${esc(en.id)}">✎</button>
+      <button class="btn btn--danger btn--small" data-del="${esc(en.id)}">🗑</button>
+    </div>
+  </div>`;
+}
+function toggleCardPw(id){
+  const en=state.vault.entries.find(x=>x.id===id);if(!en)return;
+  const el=$("#pw-"+CSS.escape(id));if(!el)return;
+  if(el.classList.contains("revealed")){el.textContent="••••••••";el.classList.remove("revealed");}
+  else{el.textContent=en.pw;el.classList.add("revealed");}
+}
+async function copyField(id,type){
+  const en=state.vault.entries.find(x=>x.id===id);if(!en)return;
+  const val=type==="pw"?en.pw:en.user;
+  try{await navigator.clipboard.writeText(val);toast(type==="pw"?t("copiedPw"):t("copiedUser"));}
+  catch(e){toast(t("copied"));}
+  if(type==="pw"){setTimeout(()=>{try{navigator.clipboard.writeText("");}catch(e){}},4000);}
+}
+
+/* ---------------- Add / Edit modal ---------------- */
+let editingId=null;
+function openAdd(id){
+  editingId=id||null;
+  const en=id?state.vault.entries.find(x=>x.id===id):null;
+  const ov=document.createElement("div");ov.className="modal-overlay";ov.id="account-modal";
+  ov.innerHTML=`<div class="modal">
+    <div class="modal__head"><h2>${en?t("editTitle"):t("addTitle")}</h2>
+      <button class="modal__close" data-close>×</button></div>
+    <div class="field"><label>${t("svcName")} *</label><input id="a-name" value="${esc(en?en.name:"")}" placeholder="${t("svcName")}"/></div>
+    <div class="field"><label>${t("svcUser")} *</label><input id="a-user" value="${esc(en?en.user:"")}" autocomplete="username"/></div>
+    <div class="field"><label>${t("svcPw")} *</label>
+      <input type="password" id="a-pw" value="${esc(en?en.pw:"")}" autocomplete="new-password"/>
+      <button type="button" class="eye-toggle" data-eye="a-pw">👁</button></div>
+    <div class="field"><label>${t("svcUrl")}</label><input id="a-url" value="${esc(en?en.url:"")}" placeholder="https://"/></div>
+    <div class="field"><label>${t("svcCat")}</label>
+      <input id="a-cat" value="${esc(en?en.cat:"")}" placeholder="${t("svcCat")}"/></div>
+    <div class="field"><label>${t("svcNotes")}</label><textarea id="a-notes" rows="2">${esc(en?en.notes:"")}</textarea></div>
+    <div class="modal__actions">
+      <button class="btn btn--primary" id="a-save">${t("save")}</button>
+      <button class="btn btn--ghost" data-close>${t("cancel")}</button>
+    </div>
+    ${en?`<button class="btn btn--danger" id="a-del" style="margin-top:10px">${t("delete")}</button>`:""}
+  </div>`;
+  document.body.appendChild(ov);
+  ov.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>ov.remove());
+  ov.addEventListener("click",e=>{if(e.target===ov)ov.remove();});
+  ov.querySelector("#a-save").onclick=async()=>{
+    const name=ov.querySelector("#a-name").value.trim();
+    const user=ov.querySelector("#a-user").value.trim();
+    const pw=ov.querySelector("#a-pw").value;
+    if(!name||!user||!pw){toast(t("fillRequired"),true);return;}
+    if(en){
+      Object.assign(en,{name,user,pw,url:ov.querySelector("#a-url").value.trim(),
+        cat:ov.querySelector("#a-cat").value.trim(),notes:ov.querySelector("#a-notes").value.trim(),updated:Date.now()});
+    }else{
+      state.vault.entries.push({id:"e"+Date.now()+Math.floor(Math.random()*9999),
+        name,user,pw,url:ov.querySelector("#a-url").value.trim(),
+        cat:ov.querySelector("#a-cat").value.trim(),notes:ov.querySelector("#a-notes").value.trim(),
+        updated:Date.now()});
+    }
+    await persistVault();ov.remove();renderVault();toast(t("saved"));
+  };
+  if(en){
+    ov.querySelector("#a-del").onclick=async()=>{
+      if(!confirm(t("confirmDelete")))return;
+      state.vault.entries=state.vault.entries.filter(x=>x.id!==en.id);
+      await persistVault();ov.remove();renderVault();toast(t("deleted"));
+    };
+  }
+  const eye=ov.querySelector("[data-eye=a-pw]");
+  if(eye)eye.onclick=()=>{const i=ov.querySelector("#a-pw");i.type=i.type==="password"?"text":"password";};
+  setTimeout(()=>{const f=ov.querySelector("#a-name");if(f)f.focus();},50);
+}
+async function delAccount(id){
+  if(!confirm(t("confirmDelete")))return;
+  state.vault.entries=state.vault.entries.filter(x=>x.id!==id);
+  await persistVault();renderVault();toast(t("deleted"));
+}
+
+/* ---------------- Password check ---------------- */
+function strength(pw){
+  let s=0;
+  if(pw.length>=8)s++;if(pw.length>=12)s++;
+  if(/[a-z]/.test(pw)&&/[A-Z]/.test(pw))s++;
+  if(/\d/.test(pw))s++;
+  if(/[^A-Za-z0-9]/.test(pw))s++;
+  if(pw.length>=16)s++;
+  if(s<=2)return 0;if(s<=3)return 1;if(s<=4)return 2;return 3;
+}
+async function sha1Hex(str){
+  const buf=await crypto.subtle.digest("SHA-1",new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("");
+}
+async function runCheck(){
+  const pw=$("#check-pw").value;
+  if(!pw){toast(t("fillRequired"),true);return;}
+  const lvl=strength(pw);
+  const bar=$("#strength-bar"),label=$("#strength-label");
+  bar.classList.remove("hidden");label.classList.remove("hidden");
+  const segs=bar.querySelectorAll(".seg");
+  segs.forEach((s,i)=>{s.className="seg";if(i<lvl+1)s.classList.add(["weak","mid","strong","strong"][lvl]);});
+  $("#strength-lvl").textContent=t(["pwWeak","pwMid","pwStrong","pwVStrong"][lvl]);
+  const res=$("#check-result");res.classList.remove("show","ok","warn","info");
+  const btn=$("#btn-check-now");btn.disabled=true;btn.textContent="...";
+  try{
+    const hash=await sha1Hex(pw);
+    const prefix=hash.slice(0,5).toUpperCase(),suffix=hash.slice(5).toUpperCase();
+    const r=await fetch("https://api.pwnedpasswords.com/range/"+prefix);
+    const body=await r.text();
+    const found=body.split("\r\n").some(line=>line.split(":")[0]===suffix);
+    let html,cls;
+    if(pw.length<8){html=t("pwLenNote");cls="warn";}
+    else if(found){html=t("leakFound");cls="warn";}
+    else{html=t("leakSafe");cls="ok";}
+    res.innerHTML=html;res.className="check-result show "+cls;
+  }catch(e){
+    res.innerHTML=t("leakSafe");res.className="check-result show ok";
+  }
+  btn.disabled=false;btn.textContent=t("checkNow");
+}
+
+/* ---------------- Export / Import ---------------- */
+async function doExport(){
+  const pw=prompt(t("exportAsk"));
+  if(!pw)return;
+  const res=await tryUnlock(pw);
+  if(!res.ok){toast(t("exportErr"),true);return;}
+  const env=await encrypt(state.key,JSON.stringify(state.vault));
+  const blob=new Blob([JSON.stringify({app:"ciphervault",v:1,env})],{type:"application/json"});
+  const d=new Date(),ds=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);
+  a.download=`ciphervault-backup-${ds}.cvault.json`;a.click();URL.revokeObjectURL(a.href);
+  toast(t("exportOk"));
+}
+function doImport(){
+  const inp=document.createElement("input");inp.type="file";inp.accept=".json,.cvault.json";
+  inp.onchange=async()=>{
+    const f=inp.files[0];if(!f)return;
+    const pw=prompt(t("importAsk"));
+    if(!pw)return;
+    if(!confirm(t("importConfirm")))return;
+    try{
+      const text=await f.text();const data=JSON.parse(text);
+      if(!data.env)throw new Error("bad");
+      const key=await deriveKey(pw,b64ToBuf(loadCfg().salt));
+      const plain=await decrypt(key,data.env);
+      const vault=JSON.parse(plain);
+      if(!vault||!Array.isArray(vault.entries))throw new Error("bad");
+      state.vault=vault;
+      await persistVault();renderVault();toast(t("importOk"));
+    }catch(e){toast(t("importErr"),true);}
+  };
+  inp.click();
+}
+
+/* ---------------- Biometric ---------------- */
+async function doBiometric(){
+  const supported=window.PublicKeyCredential&&
+    (await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().catch(()=>false));
+  if(!supported){toast(t("bioUnsupported"),true);return;}
+  try{
+    const cred=await navigator.credentials.create({
+      publicKey:{challenge:randBytes(32),rp:{name:"CipherVault"},
+        user:{id:randBytes(16),name:"ciphervault",displayName:"CipherVault"},
+        pubKeyCredParams:[{type:"public-key",alg:-7}],timeout:60000,
+        authenticatorSelection:{authenticatorAttachment:"platform",userVerification:"required"},
+        attestation:"none"}});
+    if(cred){localStorage.setItem("cv.bio","1");toast(t("bioOk"));}
+  }catch(e){toast(t("bioUnsupported"),true);}
+}
+
+/* ---------------- Install ---------------- */
+async function doInstall(){
+  if(window.deferredPrompt){
+    window.deferredPrompt.prompt();
+    const r=await window.deferredPrompt.userChoice;
+    window.deferredPrompt=null;
+    if(r.outcome==="accepted")toast(t("installOk"));
+  }else{toast(t("installUnsupported"),true);}
+}
+
+/* ---------------- Lock ---------------- */
+function lockVault(){
+  if(!confirm(t("confirmLock")))return;
+  state={cfg:loadCfg(),vault:null,key:null};
+  closeDrawer();
+  renderAccess();
+  showScreen("access");
+}
+
+/* ---------------- Wire up ---------------- */
+function bind(){
+  $("#access-form").addEventListener("submit",handleAccess);
+  $$(".menu-toggle").forEach(b=>b.addEventListener("click",openDrawer));
+  $("#drawer-overlay").addEventListener("click",closeDrawer);
+  $("#btn-lang").addEventListener("click",()=>{lang=lang==="ar"?"en":"ar";applyLang();renderAccess();if(!state.vault)return;renderVault();});
+  $("#btn-lock").addEventListener("click",lockVault);
+  $("#search").addEventListener("input",renderVault);
+  $("#btn-add").addEventListener("click",openAdd);
+  $("#btn-check").addEventListener("click",()=>showScreen("check"));
+  $("#btn-back-check").addEventListener("click",()=>showScreen("vault"));
+  $("#btn-check-now").addEventListener("click",runCheck);
+  $("#check-pw").addEventListener("keydown",e=>{if(e.key==="Enter")runCheck();});
+  $$(".drawer__item[data-nav]").forEach(i=>i.addEventListener("click",()=>{
+    const n=i.dataset.nav;
+    closeDrawer();
+    if(n==="add"){openAdd();return;}
+    if(n==="import"){doImport();return;}
+    if(n==="export"){doExport();return;}
+    if(n==="biometric"){doBiometric();return;}
+    if(n==="install"){doInstall();return;}
+    showScreen(n);
+  }));
+  $$(".eye-toggle").forEach(b=>b.addEventListener("click",()=>{
+    const inp=$("#"+b.dataset.eye);
+    if(inp)inp.type=inp.type==="password"?"text":"password";
+  }));
+  window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();window.deferredPrompt=e;});
+}
+
+/* ---------------- Binary rain ---------------- */
+function initRain(){
+  const cv=$("#binary-rain"),ctx=cv.getContext("2d");
+  let w,h,cols,fs=14,drops=[];
+  function resize(){
+    w=cv.width=innerWidth;h=cv.height=innerHeight;
+    cols=Math.floor(w/fs);drops=Array(cols).fill(0).map(()=>Math.random()*-50);
+  }
+  resize();addEventListener("resize",resize);
+  const reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if(reduced){ctx.fillStyle="#000";ctx.fillRect(0,0,w,h);return;}
+  function draw(){
+    ctx.fillStyle="rgba(3,3,3,.12)";ctx.fillRect(0,0,w,h);
+    ctx.font=fs+"px monospace";
+    for(let i=0;i<cols;i++){
+      const ch=Math.random()>.5?"0":"1";
+      ctx.fillStyle="rgba(229,10,30,.16)";
+      ctx.fillText(ch,i*fs,drops[i]*fs);
+      if(drops[i]*fs>h&&Math.random()>.975)drops[i]=0;
+      drops[i]++;
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+/* ---------------- Boot ---------------- */
+function boot(){
+  applyLang();
+  initRain();
+  bind();
+  renderAccess();
+  showScreen("access");
+  // restore last session if unlocked (keep simple: always show access)
+}
+boot();
+</script>
+</body>
+</html>
