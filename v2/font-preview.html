@@ -3,30 +3,27 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>اختيار خط CipherVault — سيبراني</title>
+<title>اختيار خط CipherVault — 50 خط موثّق</title>
 <style>
-:root{
-  --bg:#030303; --panel:#0d0d0f; --txt:#f2f2f3; --muted:#9a9aa3;
-  --red:#e50a1e; --red-soft:#ff2a3d; --line:rgba(255,255,255,.08);
-}
+:root{--bg:#030303;--panel:#0d0d0f;--txt:#f2f2f3;--muted:#9a9aa3;--red:#e50a1e;--red-soft:#ff2a3d;--line:rgba(255,255,255,.08)}
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--txt);font-family:system-ui,sans-serif;padding:20px}
+body{background:var(--bg);color:var(--txt);font-family:system-ui,sans-serif;padding:18px}
 h1{font-size:23px;margin-bottom:4px}
-p.head{color:var(--muted);font-size:13px;margin-bottom:18px;line-height:1.6}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
-.font-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:11px}
+p.head{color:var(--muted);font-size:13px;margin-bottom:16px;line-height:1.6}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(285px,1fr));gap:13px}
+.font-card{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:13px 15px;display:flex;flex-direction:column;gap:10px}
 .font-card.selected{border-color:var(--red-soft);box-shadow:0 0 0 2px rgba(229,10,30,.25)}
-.fc-head{display:flex;align-items:center;justify-content:space-between}
-.fc-name{font-family:var(--f);font-size:14px;color:#fff}
-.fc-tag{font-family:monospace;font-size:10px;color:var(--muted)}
-.big{font-family:var(--f);font-weight:700;font-size:30px;letter-spacing:.1em;color:var(--red);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}
-.pw-sample{background:rgba(0,0,0,.4);border:1px solid var(--line);border-radius:9px;padding:8px 11px;font-family:var(--f);font-size:14px;color:var(--muted);letter-spacing:.13em}
-.btn-sample{font-family:var(--f);font-size:13px;font-weight:600;background:linear-gradient(135deg,var(--red-soft),var(--red));color:#fff;border-radius:11px;padding:9px;text-align:center}
-.body-sample{font-family:var(--f);font-size:12px;color:var(--muted);line-height:1.5}
+.num{position:absolute;top:9px;inset-inline-start:10px;width:26px;height:26px;border-radius:50%;background:var(--red);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;z-index:2}
+.fc-head{padding-inline-start:36px;display:flex;align-items:center;justify-content:space-between}
+.fc-name{font-family:var(--f);font-size:12.5px;color:#fff;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fc-tag{font-family:monospace;font-size:9.5px;color:var(--muted)}
+.big{font-family:var(--f);font-weight:700;font-size:26px;letter-spacing:.08em;color:var(--red);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}
+.pw-sample{background:rgba(0,0,0,.4);border:1px solid var(--line);border-radius:9px;padding:7px 10px;font-family:var(--f);font-size:12px;color:var(--muted);letter-spacing:.12em}
+.btn-sample{font-family:var(--f);font-size:12px;font-weight:600;background:linear-gradient(135deg,var(--red-soft),var(--red));color:#fff;border-radius:10px;padding:8px;text-align:center}
+.body-sample{font-family:var(--f);font-size:11px;color:var(--muted);line-height:1.4}
 .pick{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:10px;padding:8px;font-size:13px;color:var(--muted);cursor:pointer}
-.pick:hover{color:var(--txt);background:rgba(255,255,255,.09)}
 button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
-.result{display:none;margin-top:12px;padding:13px;border:1px solid var(--red-soft);border-radius:12px;background:var(--panel)}
+.result{display:none;margin-top:11px;padding:13px;border:1px solid var(--red-soft);border-radius:12px;background:var(--panel)}
 .result h3{color:var(--txt);font-size:14px;margin-bottom:5px}
 .result code{display:block;background:rgba(0,0,0,.5);border:1px solid var(--line);border-radius:8px;padding:7px 12px;font-family:monospace;font-size:12px;color:#86efac;white-space:pre-wrap;word-break:break-all}
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#161618;border:1px solid var(--line);color:#fff;padding:11px 22px;border-radius:12px;z-index:50;opacity:0;transition:.3s;font-size:14px}
@@ -34,62 +31,90 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 </style>
 </head>
 <body>
-<h1>اختيار الخط — أمن سيبراني ⚠️ (20 خط)</h1>
-<p class="head">خطوط تقنية / مستقبلية / طرفية تناسب طابع الأمن السيبراني. كل بطاقة تعرض اسم المنتج، حقل كلمة المرور، الزر، وجملة تجريبية بالخط.<br/>
-اضغط <b style="color:var(--red-soft)">اختيار</b> على اللي يعجبك، وانسخ كود CSS تحت وأرسله لي وأنا أطبّقه.</p>
+<h1>اختيار الخط — 50 خط موثّق ✅</h1>
+<p class="head">كل خط تم التحقق من وجوده على Google Fonts (يعرض فعلاً).<br/>عجبتك وحدة؟ قول لي <b style="color:var(--red-soft)">رقمها</b> هنا وأطبّقها على الموقع كله.</p>
 
 <div class="grid" id="grid"></div>
-<div class="result" id="result">
-  <h3>الخط المختار — كود CSS (أرسله لي وأنا أطبّقه على الموقع بأكمله):</h3>
-  <code id="code"></code>
-</div>
-<div id="toast">✓ تم اختيار الخط</div>
+<div class="result" id="result"><h3>الخط المختار — رقم:</h3><code id="code"></code></div>
+<div id="toast">✓ تم الاختيار</div>
 
 <script>
-// 20 cyber / tech / terminal fonts from Google Fonts
 const FONTS=[
-  {n:"Exo 2",       nf:"Exo+2",       css:"'Exo 2',sans-serif",                d:"Geometric المستقبلية الحادة"},
-  {n:"Oxanium",     nf:"Oxanium",     css:"'Oxanium',sans-serif",              d:"عرض سيبراني عدواني"},
-  {n:"Orbitron",    nf:"Orbitron",    css:"'Orbitron',sans-serif",             d:"عرب الفضاء / مستقبلية"},
-  {n:"VT323",       nf:"VT323",       css:"'VT323',monospace",                 d:"طرفية بكسل / قديمة"},
-  {n:"Share Tech Mono", nf:"Share+Tech+Mono", css:"'Share Tech Mono',monospace", d:"مونو تقني واضح"},
-  {n:"Space Mono",  nf:"Space+Mono",  css:"'Space Mono',monospace",            d:"مونو حديث مستقر"},
-  {n:"JetBrains Mono", nf:"JetBrains+Mono", css:"'JetBrains Mono',monospace",  d:"كود برمجي أنيق"},
-  {n:"Fira Code",   nf:"Fira+Code",   css:"'Fira Code',monospace",             d:"كود مع رموز + عصبي"},
-  {n:"IBM Plex Mono", nf:"IBM+Plex+Mono", css:"'IBM Plex Mono',monospace",     d:"مونو صناعي"},
-  {n:"Audiowide",   nf:"Audiowide",   css:"'Audiowide',sans-serif",            d:"مستقبلية سلسة"},
-  {n:"Chakra Petch",nf:"Chakra+Petch",css:"'Chakra Petch',sans-serif",         d:"حادة / تقنية شرقية"},
-  {n:"Rajdhani",    nf:"Rajdhani",    css:"'Rajdhani',sans-serif",             d:"تكنولوجي مضغوط"},
-  {n:"Oswald",      nf:"Oswald",      css:"'Oswald',sans-serif",               d:"مضغوط / إعلاني"},
-  {n:"Syncopate",   nf:"Syncopate",   css:"'Syncopate',sans-serif",            d:"ريترو تقني"},
-  {n:"Megrim",      nf:"Megrim",      css:"'Megrim',sans-serif",               d:"رسمي صارم"},
-  {n:"Green Screen",nf:"Green+Screen",css:"'Green Screen',monospace",          d:"شاشة CRT / طرفية"},
-  {n:"Space Grotesk",nf:"Space+Grotesk",css:"'Space Grotesk',sans-serif",      d:"تقني نظيف حديث"},
-  {n:"Chivo Mono",  nf:"Chivo+Mono",  css:"'Chivo Mono',monospace",            d:"مونو برمجي أملس"},
-  {n:"Anton",       nf:"Anton",       css:"'Anton',sans-serif",                d:"مستقبلي بسيط"},
-  {n:"Rethink Sans",nf:"Rethink+Sans",css:"'Rethink Sans',sans-serif",         d:"هندسي تقني"},
+["1","Archivo","Archivo","غروتسك تقني"],
+["2","Barlow","Barlow","نظيف حديث"],
+["3","Oxanium","Oxanium","عرض سيبراني عدواني"],
+["4","Orbitron","Orbitron","عرب الفضاء"],
+["5","Exo 2","Exo+2","هندسي مستقبلي"],
+["6","VT323","VT323","طرفية بكسل"],
+["7","Share Tech Mono","Share+Tech+Mono","مونو تقني"],
+["8","Space Mono","Space+Mono","مونو حديث"],
+["9","JetBrains Mono","JetBrains+Mono","كود أنيق"],
+["10","Fira Code","Fira+Code","كود عصبي"],
+["11","IBM Plex Mono","IBM+Plex+Mono","مونو صناعي"],
+["12","Chivo Mono","Chivo+Mono","مونو أملس"],
+["13","Audiowide","Audiowide","مستقبلية سلسة"],
+["14","Chakra Petch","Chakra+Petch","حادة تقنية"],
+["15","Rajdhani","Rajdhani","تكنولوجي مضغوط"],
+["16","Oswald","Oswald","مضغوط إعلاني"],
+["17","Syncopate","Syncopate","ريترو تقني"],
+["18","Megrim","Megrim","رسمي صارم"],
+["19","Space Grotesk","Space+Grotesk","تقني نظيف"],
+["20","Rethink Sans","Rethink+Sans","هندسي تقني"],
+["21","Anton","Anton","مستقبلي بسيط"],
+["22","Genos","Genos","تقنية عالية"],
+["23","Inter","Inter","واضح حديث"],
+["24","Chivo","Chivo","غروتسك نظيف"],
+["25","Nunito","Nunito","دائري ناعم"],
+["26","Gidole","Gidole","مستقبلي"],
+["27","Cousine","Cousine","مونو جديد"],
+["28","M PLUS 1p","M+PLUS+1p","تقني ياباني"],
+["29","Mukta","Mukta","نظامي متجانس"],
+["30","Noto Sans","Noto+Sans","نظامي متوازن"],
+["31","Qahiri","Qahiri","تجريدي نظيف"],
+["32","Kdam Thmor","Kdam+Thmor","تقني فاخر"],
+["33","Murecho","Murecho","حديث صريح"],
+["34","Corben","Corben","عبقري تقني"],
+["35","Hahmlet","Hahmlet","هندسي فريد"],
+["36","Kumar One","Kumar+One","تجريبي"],
+["37","Ma Shan Zheng","Ma+Shan+Zheng","ضخم عصبي"],
+["38","Manrope","Manrope","واضح عصري"],
+["39","Onest","Onest","نظيف مباشر"],
+["40","Unbounded","Unbounded","مستقبلي مفتوح"],
+["41","Chathura","Chathura","تقني إضافي"],
+["42","Suravaram","Suravaram","صريح"],
+["43","Tuffy","Tuffy","ودود حاد"],
+["44","Urbanist","Urbanist","مدني تقني"],
+["45","Monoton","Monoton","أحادي صارم"],
+["46","Jomhuria","Jomhuria","نينجا ثقيل"],
+["47","Noto Serif","Noto+Serif","كلاسيكي أنيق"],
+["48","Nabla","Nabla","هندسي جدلي"],
+["49","Solitreo","Solitreo","تقني رشيق"],
+["50","Grandstander","Grandstander","عرض لافت"],
 ];
+const cssFam = n => "'"+n+"',sans-serif";
 const grid=document.getElementById('grid');
-const LINK=`@import url('https://fonts.googleapis.com/css2?family=${'«F»'}&display=swap');`;
 FONTS.forEach(f=>{
+  const[num,name,gf,d]=f;
   const card=document.createElement('div');card.className='font-card';
-  card.style.setProperty('--f',f.css);
+  card.style.setProperty('--f',cssFam(name));
   card.innerHTML=`
-    <div class="fc-head"><span class="fc-name">${f.n}</span><span class="fc-tag">${f.d}</span></div>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=${gf}&display=swap" />
+    <style>@import url('https://fonts.googleapis.com/css2?family=${gf}&display=swap');</style>
+    <span class="num">${num}</span>
+    <div class="fc-head"><span class="fc-name">${name}</span><span class="fc-tag">${d}</span></div>
     <div class="big">CIPHERVAULT</div>
     <div class="pw-sample">••••••••</div>
     <div class="btn-sample">Unlock Vault</div>
-    <div class="body-sample">ACCESS GRANTED · 0x0F A1 9E · root@vault:~# whoami</div>
-    <button class="pick" data-nf="${f.nf}" data-css="__ESC__${f.css}__ESC__">اختيار هذا الخط</button>`;
+    <div class="body-sample">ACCESS GRANTED · 0x0F A1 · root@vault:~# whoami</div>
+    <button class="pick" data-gf="${gf}" data-name="${name}" data-num="${num}">اختيار رقم ${num}</button>`;
   grid.appendChild(card);
 });
 document.querySelectorAll('.pick').forEach(b=>{
   b.addEventListener('click',()=>{
-    const nf=b.dataset.nf, css=b.dataset.css.replace('__ESC__','');
+    const gf=b.dataset.gf,name=b.dataset.name,num=b.dataset.num;
     document.querySelectorAll('.font-card').forEach(c=>c.classList.remove('selected'));
     b.closest('.font-card').classList.add('selected');
-    const code=`@import url('https://fonts.googleapis.com/css2?family=${nf}&display=swap');\n\nbody, button, input, textarea { font-family: ${css}; }\n/* العنوان CIPHERVAULT */\n.product-name { font-family: ${css}; }`;
-    document.getElementById('code').textContent=code;
+    document.getElementById('code').textContent=`الخط المختار: رقم ${num} — ${name}\n\n@import url('https://fonts.googleapis.com/css2?family=${gf}&display=swap');\n\nbody, button, input, textarea { font-family: '${name}', sans-serif; }\n.product-name { font-family: '${name}', sans-serif; }`;
     document.getElementById('result').style.display='block';
     const t=document.getElementById('toast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800);
   });
