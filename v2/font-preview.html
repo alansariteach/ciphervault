@@ -3,87 +3,92 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>اختيار خط CipherVault</title>
+<title>اختيار خط CipherVault — سيبراني</title>
 <style>
 :root{
   --bg:#030303; --panel:#0d0d0f; --txt:#f2f2f3; --muted:#9a9aa3;
   --red:#e50a1e; --red-soft:#ff2a3d; --line:rgba(255,255,255,.08);
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--txt);font-family:system-ui,sans-serif;padding:24px}
-h1{font-size:24px;margin-bottom:6px}
-p.head{color:var(--muted);font-size:14px;margin-bottom:22px;line-height:1.6}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px}
-.font-card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px 20px;display:flex;flex-direction:column;gap:14px}
+body{background:var(--bg);color:var(--txt);font-family:system-ui,sans-serif;padding:20px}
+h1{font-size:23px;margin-bottom:4px}
+p.head{color:var(--muted);font-size:13px;margin-bottom:18px;line-height:1.6}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.font-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:11px}
 .font-card.selected{border-color:var(--red-soft);box-shadow:0 0 0 2px rgba(229,10,30,.25)}
-.fc-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.fc-name{font-family:var(--f);font-size:15px;color:#fff}
-.fc-tag{font-family:monospace;font-size:11px;color:var(--muted)}
-.pw-sample{background:rgba(0,0,0,.4);border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-family:var(--f);font-size:15px;color:var(--muted);letter-spacing:.14em}
-.big{font-family:var(--f);font-weight:700;font-size:34px;letter-spacing:.12em;color:var(--red);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}
-.btn-sample{font-family:var(--f);font-size:14px;font-weight:600;background:linear-gradient(135deg,var(--red-soft),var(--red));color:#fff;border-radius:12px;padding:10px;text-align:center;color:#fff}
-.body-sample{font-family:var(--f);font-size:13px;color:var(--muted);line-height:1.5}
-.pick-row{display:flex;gap:10px;margin-top:6px}
+.fc-head{display:flex;align-items:center;justify-content:space-between}
+.fc-name{font-family:var(--f);font-size:14px;color:#fff}
+.fc-tag{font-family:monospace;font-size:10px;color:var(--muted)}
+.big{font-family:var(--f);font-weight:700;font-size:30px;letter-spacing:.1em;color:var(--red);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}
+.pw-sample{background:rgba(0,0,0,.4);border:1px solid var(--line);border-radius:9px;padding:8px 11px;font-family:var(--f);font-size:14px;color:var(--muted);letter-spacing:.13em}
+.btn-sample{font-family:var(--f);font-size:13px;font-weight:600;background:linear-gradient(135deg,var(--red-soft),var(--red));color:#fff;border-radius:11px;padding:9px;text-align:center}
+.body-sample{font-family:var(--f);font-size:12px;color:var(--muted);line-height:1.5}
+.pick{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:10px;padding:8px;font-size:13px;color:var(--muted);cursor:pointer}
+.pick:hover{color:var(--txt);background:rgba(255,255,255,.09)}
 button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
-.pick{flex:1;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:10px;padding:9px;font-size:13px;color:var(--muted)}
-.pick:hover{color:var(--txt);background:rgba(255,255,255,.08)}
-.result{display:none;margin-top:14px;padding:14px;border:1px solid var(--red-soft);border-radius:12px;background:var(--panel)}
-.result h3{color:var(--txt);font-size:14px;margin-bottom:6px}
-.result code{display:block;background:rgba(0,0,0,.5);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-family:monospace;font-size:12.5px;color:#86efac;white-space:pre-wrap;word-break:break-all}
-#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#161618;border:1px solid var(--line);color:#fff;padding:12px 22px;border-radius:12px;z-index:50;opacity:0;transition:.3s;font-size:14px}
+.result{display:none;margin-top:12px;padding:13px;border:1px solid var(--red-soft);border-radius:12px;background:var(--panel)}
+.result h3{color:var(--txt);font-size:14px;margin-bottom:5px}
+.result code{display:block;background:rgba(0,0,0,.5);border:1px solid var(--line);border-radius:8px;padding:7px 12px;font-family:monospace;font-size:12px;color:#86efac;white-space:pre-wrap;word-break:break-all}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#161618;border:1px solid var(--line);color:#fff;padding:11px 22px;border-radius:12px;z-index:50;opacity:0;transition:.3s;font-size:14px}
 #toast.show{opacity:1}
 </style>
 </head>
 <body>
-<h1>اختيار الخط الإنجليزي — CipherVault</h1>
-<p class="head">كل بطاقة تعرض نص الموقع بنفس الخط المقترح: اسم المنتج (CIPHERVAULT)، اسم الخدمة، حقل كلمة المرور، الزر، وجملة توضيحية.<br/>
-اضغط <b style="color:var(--red-soft)">اختيار</b> في البطاقة اللي تعجبك، وستظهر قاعدة الكود في الأسفل لتفعيلها.</p>
+<h1>اختيار الخط — أمن سيبراني ⚠️ (20 خط)</h1>
+<p class="head">خطوط تقنية / مستقبلية / طرفية تناسب طابع الأمن السيبراني. كل بطاقة تعرض اسم المنتج، حقل كلمة المرور، الزر، وجملة تجريبية بالخط.<br/>
+اضغط <b style="color:var(--red-soft)">اختيار</b> على اللي يعجبك، وانسخ كود CSS تحت وأرسله لي وأنا أطبّقه.</p>
 
 <div class="grid" id="grid"></div>
 <div class="result" id="result">
-  <h3>الخط المختار — انسخ قاعدة CSS هذه وأضفها للموقع:</h3>
+  <h3>الخط المختار — كود CSS (أرسله لي وأنا أطبّقه على الموقع بأكمله):</h3>
   <code id="code"></code>
 </div>
 <div id="toast">✓ تم اختيار الخط</div>
 
 <script>
+// 20 cyber / tech / terminal fonts from Google Fonts
 const FONTS=[
-  {id:"inter",name:"Inter",css:"'Inter',system-ui,-apple-system,sans-serif",preview:"The quick brown fox jumps over the lazy dog 0123456789"},
-  {id:"sfmono",name:"SF Mono / Consolas",css:"'SF Mono','Consolas','Roboto Mono',monospace",preview:"The quick brown fox jumps over the lazy dog 0123456789"},
-  {id:"jetbrains",name:"JetBrains Mono",css:"'JetBrains Mono',monospace",preview:"The quick brown fox jumps over the lazy dog 0123456789"},
-  {id:"montserrat",name:"Montserrat",css:"'Montserrat',sans-serif",preview:"The quick brown fox jumps over the lazy dog 0123456789"},
-  {id:"oswald",name:"Oswald",css:"'Oswald',sans-serif",preview:"The quick brown fox jumps over the lazy dog 0123456789"},
-  {id:"rajdhani",name:"Rajdhani",css:"'Rajdhani',sans-serif",preview:"The quick brown fox jumps over the lazy dog 0123456789"},
-  {id:"anton",name:"Anton",css:"'Anton',sans-serif",preview:"The quick brown fox jumps over the lazy dog 0123456789"},
-  {id:"barlow",name:"Barlow",css:"'Barlow',sans-serif",preview:"The quick brown fox jumps over the lazy dog 0123456789"},
-  {id:"archivo",name:"Archivo Narrow/Expanded",css:"'Archivo',sans-serif",preview:"The quick brown fox jumps over the lazy dog 0123456789"},
-  {id:"gotham",name:"Gotham",css:"'Gotham',sans-serif",preview:"The quick brown fox jumps over the lazy dog 0123456789"},
+  {n:"Exo 2",       nf:"Exo+2",       css:"'Exo 2',sans-serif",                d:"Geometric المستقبلية الحادة"},
+  {n:"Oxanium",     nf:"Oxanium",     css:"'Oxanium',sans-serif",              d:"عرض سيبراني عدواني"},
+  {n:"Orbitron",    nf:"Orbitron",    css:"'Orbitron',sans-serif",             d:"عرب الفضاء / مستقبلية"},
+  {n:"VT323",       nf:"VT323",       css:"'VT323',monospace",                 d:"طرفية بكسل / قديمة"},
+  {n:"Share Tech Mono", nf:"Share+Tech+Mono", css:"'Share Tech Mono',monospace", d:"مونو تقني واضح"},
+  {n:"Space Mono",  nf:"Space+Mono",  css:"'Space Mono',monospace",            d:"مونو حديث مستقر"},
+  {n:"JetBrains Mono", nf:"JetBrains+Mono", css:"'JetBrains Mono',monospace",  d:"كود برمجي أنيق"},
+  {n:"Fira Code",   nf:"Fira+Code",   css:"'Fira Code',monospace",             d:"كود مع رموز + عصبي"},
+  {n:"IBM Plex Mono", nf:"IBM+Plex+Mono", css:"'IBM Plex Mono',monospace",     d:"مونو صناعي"},
+  {n:"Audiowide",   nf:"Audiowide",   css:"'Audiowide',sans-serif",            d:"مستقبلية سلسة"},
+  {n:"Chakra Petch",nf:"Chakra+Petch",css:"'Chakra Petch',sans-serif",         d:"حادة / تقنية شرقية"},
+  {n:"Rajdhani",    nf:"Rajdhani",    css:"'Rajdhani',sans-serif",             d:"تكنولوجي مضغوط"},
+  {n:"Oswald",      nf:"Oswald",      css:"'Oswald',sans-serif",               d:"مضغوط / إعلاني"},
+  {n:"Syncopate",   nf:"Syncopate",   css:"'Syncopate',sans-serif",            d:"ريترو تقني"},
+  {n:"Megrim",      nf:"Megrim",      css:"'Megrim',sans-serif",               d:"رسمي صارم"},
+  {n:"Green Screen",nf:"Green+Screen",css:"'Green Screen',monospace",          d:"شاشة CRT / طرفية"},
+  {n:"Space Grotesk",nf:"Space+Grotesk",css:"'Space Grotesk',sans-serif",      d:"تقني نظيف حديث"},
+  {n:"Chivo Mono",  nf:"Chivo+Mono",  css:"'Chivo Mono',monospace",            d:"مونو برمجي أملس"},
+  {n:"Anton",       nf:"Anton",       css:"'Anton',sans-serif",                d:"مستقبلي بسيط"},
+  {n:"Rethink Sans",nf:"Rethink+Sans",css:"'Rethink Sans',sans-serif",         d:"هندسي تقني"},
 ];
-let chosen=null;
 const grid=document.getElementById('grid');
+const LINK=`@import url('https://fonts.googleapis.com/css2?family=${'«F»'}&display=swap');`;
 FONTS.forEach(f=>{
   const card=document.createElement('div');card.className='font-card';
-  card.style.setProperty('--f',"'"+(f.id==='sfmono'?"SF Mono,Consolas":f.id==='jetbrains'?"JetBrains Mono":(f.name.split(' ')[0]))+"',sans-serif");
-  // use proper named family for preview
-  const fam = f.id==='sfmono'?"monospace":f.id==='jetbrains'?"'JetBrains Mono',monospace":("'"+(f.name.split('/')[0].trim().split(' ')[0])+"',sans-serif");
-  card.style.setProperty('--f',fam);
+  card.style.setProperty('--f',f.css);
   card.innerHTML=`
-    <div class="fc-head"><span class="fc-name">${f.name}</span><span class="fc-tag">${f.id}</span></div>
+    <div class="fc-head"><span class="fc-name">${f.n}</span><span class="fc-tag">${f.d}</span></div>
     <div class="big">CIPHERVAULT</div>
     <div class="pw-sample">••••••••</div>
     <div class="btn-sample">Unlock Vault</div>
-    <div class="body-sample">${f.preview}</div>
-    <div class="pick-row"><button class="pick" data-i="${f.id}">اختيار هذا الخط</button></div>`;
+    <div class="body-sample">ACCESS GRANTED · 0x0F A1 9E · root@vault:~# whoami</div>
+    <button class="pick" data-nf="${f.nf}" data-css="__ESC__${f.css}__ESC__">اختيار هذا الخط</button>`;
   grid.appendChild(card);
 });
 document.querySelectorAll('.pick').forEach(b=>{
   b.addEventListener('click',()=>{
-    const id=b.dataset.i;
-    const f=FONTS.find(x=>x.id===id);
-    chosen=f;
+    const nf=b.dataset.nf, css=b.dataset.css.replace('__ESC__','');
     document.querySelectorAll('.font-card').forEach(c=>c.classList.remove('selected'));
     b.closest('.font-card').classList.add('selected');
-    const code=`@import url('https://fonts.googleapis.com/css2?family=${f.name.split('/')[0].split(' ').join('+')}&display=swap');\nbody{font-family:${f.css}}\n/* أو انسخها للأنماط:\n--font:${f.css} */`;
+    const code=`@import url('https://fonts.googleapis.com/css2?family=${nf}&display=swap');\n\nbody, button, input, textarea { font-family: ${css}; }\n/* العنوان CIPHERVAULT */\n.product-name { font-family: ${css}; }`;
     document.getElementById('code').textContent=code;
     document.getElementById('result').style.display='block';
     const t=document.getElementById('toast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800);
