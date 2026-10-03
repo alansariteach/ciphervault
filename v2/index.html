@@ -55,7 +55,6 @@ a{color:inherit;text-decoration:none}
 .screen[data-screen="check"] .site-header{position:fixed;top:0;left:0;right:0;z-index:5}
 /* give vault & check content top clearance for the full-bleed header */
 .screen[data-screen="vault"] .vault-top{margin-top:calc(env(safe-area-inset-top,0px) + 74px)}
-.screen[data-screen="check"] .back-row{margin-top:calc(env(safe-area-inset-top,0px) + 74px)}
 @media (min-width:901px){
   .screen[data-screen="vault"] .vault-top{margin-top:calc(env(safe-area-inset-top,0px) + 108px)}
 }
@@ -210,10 +209,27 @@ a{color:inherit;text-decoration:none}
 .modal__actions .btn{flex:1}
 
 /* ---------- Password check ---------- */
+.screen[data-screen="check"]{min-height:100vh;max-width:620px;padding:0 20px 0;
+  display:flex;flex-direction:column}
+.check-main{flex:1 1 auto;display:flex;flex-direction:column;align-items:center;
+  justify-content:center}
 .check-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
-  padding:22px;max-width:560px;margin:0 auto 30px}
+  padding:22px;max-width:560px;width:100%}
 .check-card h2{font-size:18px;margin-bottom:6px}
 .check-card .check-sub{color:var(--muted);font-size:13px;margin-bottom:18px;line-height:1.6}
+.check-pwrow{display:flex;align-items:center;gap:10px}
+.check-pwrow .field{flex:1;position:relative}
+.check-pwrow .field input{padding-inline-end:14px}
+.eye-outside{width:48px;height:48px;flex-shrink:0;display:flex;align-items:center;
+  justify-content:center;color:var(--muted);background:var(--panel);border:1px solid var(--line);
+  border-radius:12px;cursor:pointer}
+.eye-outside:hover{color:var(--txt)}
+.eye-outside svg{width:22px;height:22px}
+.check-back{position:fixed;top:calc(env(safe-area-inset-top,0px) + 96px);inset-inline-end:18px;
+  width:46px;height:46px;z-index:6;display:flex;align-items:center;justify-content:center;
+  color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:12px;cursor:pointer}
+.check-back:hover{color:var(--txt)}
+.check-back svg{width:22px;height:22px}
 .strength-bar{display:flex;gap:6px;margin-top:16px}
 .strength-bar .seg{flex:1;height:6px;border-radius:4px;background:rgba(255,255,255,.08);transition:background .3s}
 .strength-bar .seg.weak{background:var(--red)}
@@ -362,28 +378,28 @@ a{color:inherit;text-decoration:none}
   </section>
 
   <!-- ================= PASSWORD CHECK SCREEN ================= -->
-  <section class="screen hidden" data-screen="check">
-    <header class="site-header">
-      <button id="menu-toggle3" class="menu-toggle" type="button" aria-expanded="false" aria-controls="drawer" data-i18n-aria="menuOpen"><span></span><span></span><span></span></button>
-            <img src="assets/alansari-tech-logo-red-white.png" alt="Alansari.Tech" class="header-alansari" />
-          </header>
+    <section class="screen hidden" data-screen="check">
+      <header class="site-header">
+        <button id="menu-toggle3" class="menu-toggle" type="button" aria-expanded="false" aria-controls="drawer" data-i18n-aria="menuOpen"><span></span><span></span><span></span></button>
+        <img src="assets/alansari-tech-logo-red-white.png" alt="Alansari.Tech" class="header-alansari" />
+      </header>
 
-          <div class="back-row">
-      <button class="btn btn--icon" id="btn-back-check" data-i18n-aria="back" aria-label="رجوع">←</button>
-      <h1 style="font-size:20px" data-i18n="checkPw">فحص كلمة المرور</h1>
-    </div>
+      <button class="check-back" id="btn-back-check" data-i18n-aria="back" aria-label="رجوع"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 12L9 12M9 9L4 4"/><path d="M9 12L4 7"/></svg></button>
 
-    <div class="check-card">
-      <h2 data-i18n="checkTitle">فحص كلمة المرور</h2>
-      <p class="check-sub" data-i18n="checkSub">تحقق من قوة كلمة المرور ومن وجودها في تسريبات معروفة، دون إرسالها كاملة إلى أي خادم.</p>
-      <div class="field" style="margin-bottom:0">
-        <input type="password" id="check-pw" data-i18n-ph="checkPwPh" placeholder="أدخل كلمة المرور للفحص" />
-        <button type="button" class="eye-toggle" data-eye="check-pw" aria-label="إظهار/إخفاء"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
-      </div>
-      <button class="btn btn--primary" id="btn-check-now" style="margin-top:16px" data-i18n="checkNow">فحص الآن</button>
-      <div class="strength-bar hidden" id="strength-bar">
-        <div class="seg"></div><div class="seg"></div><div class="seg"></div><div class="seg"></div>
-      </div>
+      <div class="check-main">
+        <div class="check-card">
+          <h2 data-i18n="checkTitle">فحص كلمة المرور</h2>
+          <p class="check-sub" data-i18n="checkSub">تحقق من قوة كلمة المرور ومن وجودها في تسريبات معروفة، دون إرسالها كاملة إلى أي خادم.</p>
+          <div class="check-pwrow">
+            <div class="field" style="margin-bottom:0">
+              <input type="password" id="check-pw" data-i18n-ph="checkPwPh" placeholder="أدخل كلمة المرور للفحص" />
+            </div>
+            <button type="button" class="eye-toggle eye-outside" data-eye="check-pw" aria-label="إظهار/إخفاء"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+          </div>
+          <button class="btn btn--primary" id="btn-check-now" style="margin-top:16px" data-i18n="checkNow">فحص الآن</button>
+          <div class="strength-bar hidden" id="strength-bar">
+            <div class="seg"></div><div class="seg"></div><div class="seg"></div><div class="seg"></div>
+          </div>
       <div class="strength-label hidden" id="strength-label">
         <span data-i18n="strength">القوة:</span><span class="lvl" id="strength-lvl"></span>
       </div>
