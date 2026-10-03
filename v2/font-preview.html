@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>اختيار خط CipherVault</title>
+<style>
+:root{
+  --bg:#030303; --panel:#0d0d0f; --txt:#f2f2f3; --muted:#9a9aa3;
+  --red:#e50a1e; --red-soft:#ff2a3d; --line:rgba(255,255,255,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--txt);font-family:system-ui,sans-serif;padding:24px}
+h1{font-size:24px;margin-bottom:6px}
+p.head{color:var(--muted);font-size:14px;margin-bottom:22px;line-height:1.6}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px}
+.font-card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px 20px;display:flex;flex-direction:column;gap:14px}
+.font-card.selected{border-color:var(--red-soft);box-shadow:0 0 0 2px rgba(229,10,30,.25)}
+.fc-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.fc-name{font-family:var(--f);font-size:15px;color:#fff}
+.fc-tag{font-family:monospace;font-size:11px;color:var(--muted)}
+.pw-sample{background:rgba(0,0,0,.4);border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-family:var(--f);font-size:15px;color:var(--muted);letter-spacing:.14em}
+.big{font-family:var(--f);font-weight:700;font-size:34px;letter-spacing:.12em;color:var(--red);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}
+.btn-sample{font-family:var(--f);font-size:14px;font-weight:600;background:linear-gradient(135deg,var(--red-soft),var(--red));color:#fff;border-radius:12px;padding:10px;text-align:center;color:#fff}
+.body-sample{font-family:var(--f);font-size:13px;color:var(--muted);line-height:1.5}
+.pick-row{display:flex;gap:10px;margin-top:6px}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+.pick{flex:1;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:10px;padding:9px;font-size:13px;color:var(--muted)}
+.pick:hover{color:var(--txt);background:rgba(255,255,255,.08)}
+.result{display:none;margin-top:14px;padding:14px;border:1px solid var(--red-soft);border-radius:12px;background:var(--panel)}
+.result h3{color:var(--txt);font-size:14px;margin-bottom:6px}
+.result code{display:block;background:rgba(0,0,0,.5);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-family:monospace;font-size:12.5px;color:#86efac;white-space:pre-wrap;word-break:break-all}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#161618;border:1px solid var(--line);color:#fff;padding:12px 22px;border-radius:12px;z-index:50;opacity:0;transition:.3s;font-size:14px}
+#toast.show{opacity:1}
+</style>
+</head>
+<body>
+<h1>اختيار الخط الإنجليزي — CipherVault</h1>
+<p class="head">كل بطاقة تعرض نص الموقع بنفس الخط المقترح: اسم المنتج (CIPHERVAULT)، اسم الخدمة، حقل كلمة المرور، الزر، وجملة توضيحية.<br/>
+اضغط <b style="color:var(--red-soft)">اختيار</b> في البطاقة اللي تعجبك، وستظهر قاعدة الكود في الأسفل لتفعيلها.</p>
+
+<div class="grid" id="grid"></div>
+<div class="result" id="result">
+  <h3>الخط المختار — انسخ قاعدة CSS هذه وأضفها للموقع:</h3>
+  <code id="code"></code>
+</div>
+<div id="toast">✓ تم اختيار الخط</div>
+
+<script>
+const FONTS=[
+  {id:"inter",name:"Inter",css:"'Inter',system-ui,-apple-system,sans-serif",preview:"The quick brown fox jumps over the lazy dog 0123456789"},
+  {id:"sfmono",name:"SF Mono / Consolas",css:"'SF Mono','Consolas','Roboto Mono',monospace",preview:"The quick brown fox jumps over the lazy dog 0123456789"},
+  {id:"jetbrains",name:"JetBrains Mono",css:"'JetBrains Mono',monospace",preview:"The quick brown fox jumps over the lazy dog 0123456789"},
+  {id:"montserrat",name:"Montserrat",css:"'Montserrat',sans-serif",preview:"The quick brown fox jumps over the lazy dog 0123456789"},
+  {id:"oswald",name:"Oswald",css:"'Oswald',sans-serif",preview:"The quick brown fox jumps over the lazy dog 0123456789"},
+  {id:"rajdhani",name:"Rajdhani",css:"'Rajdhani',sans-serif",preview:"The quick brown fox jumps over the lazy dog 0123456789"},
+  {id:"anton",name:"Anton",css:"'Anton',sans-serif",preview:"The quick brown fox jumps over the lazy dog 0123456789"},
+  {id:"barlow",name:"Barlow",css:"'Barlow',sans-serif",preview:"The quick brown fox jumps over the lazy dog 0123456789"},
+  {id:"archivo",name:"Archivo Narrow/Expanded",css:"'Archivo',sans-serif",preview:"The quick brown fox jumps over the lazy dog 0123456789"},
+  {id:"gotham",name:"Gotham",css:"'Gotham',sans-serif",preview:"The quick brown fox jumps over the lazy dog 0123456789"},
+];
+let chosen=null;
+const grid=document.getElementById('grid');
+FONTS.forEach(f=>{
+  const card=document.createElement('div');card.className='font-card';
+  card.style.setProperty('--f',"'"+(f.id==='sfmono'?"SF Mono,Consolas":f.id==='jetbrains'?"JetBrains Mono":(f.name.split(' ')[0]))+"',sans-serif");
+  // use proper named family for preview
+  const fam = f.id==='sfmono'?"monospace":f.id==='jetbrains'?"'JetBrains Mono',monospace":("'"+(f.name.split('/')[0].trim().split(' ')[0])+"',sans-serif");
+  card.style.setProperty('--f',fam);
+  card.innerHTML=`
+    <div class="fc-head"><span class="fc-name">${f.name}</span><span class="fc-tag">${f.id}</span></div>
+    <div class="big">CIPHERVAULT</div>
+    <div class="pw-sample">••••••••</div>
+    <div class="btn-sample">Unlock Vault</div>
+    <div class="body-sample">${f.preview}</div>
+    <div class="pick-row"><button class="pick" data-i="${f.id}">اختيار هذا الخط</button></div>`;
+  grid.appendChild(card);
+});
+document.querySelectorAll('.pick').forEach(b=>{
+  b.addEventListener('click',()=>{
+    const id=b.dataset.i;
+    const f=FONTS.find(x=>x.id===id);
+    chosen=f;
+    document.querySelectorAll('.font-card').forEach(c=>c.classList.remove('selected'));
+    b.closest('.font-card').classList.add('selected');
+    const code=`@import url('https://fonts.googleapis.com/css2?family=${f.name.split('/')[0].split(' ').join('+')}&display=swap');\nbody{font-family:${f.css}}\n/* أو انسخها للأنماط:\n--font:${f.css} */`;
+    document.getElementById('code').textContent=code;
+    document.getElementById('result').style.display='block';
+    const t=document.getElementById('toast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800);
+  });
+});
+</script>
+</body>
+</html>
