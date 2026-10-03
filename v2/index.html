@@ -1182,7 +1182,7 @@ function bind(){
 /* ---------------- Binary rain ---------------- */
 function initRain(){
   const cv=$("#binary-rain"),ctx=cv.getContext("2d");
-  let w,h,cols,fs=14,drops=[];
+  let w,h,cols,fs=14,drops=[],frame=0;
   function resize(){
     w=cv.width=innerWidth;h=cv.height=innerHeight;
     cols=Math.floor(w/fs);drops=Array(cols).fill(0).map(()=>Math.random()*-50);
@@ -1193,12 +1193,16 @@ function initRain(){
   function draw(){
     ctx.fillStyle="rgba(3,3,3,.10)";ctx.fillRect(0,0,w,h);
     ctx.font=fs+"px monospace";
+    if(++frame%2===0){
+      for(let i=0;i<cols;i++){
+        if(drops[i]*fs>h&&Math.random()>.975)drops[i]=0;
+        drops[i]++;
+      }
+    }
     for(let i=0;i<cols;i++){
       const ch=Math.random()>.5?"0":"1";
       ctx.fillStyle="rgba(229,10,30,.42)";
       ctx.fillText(ch,i*fs,drops[i]*fs);
-      if(drops[i]*fs>h&&Math.random()>.975)drops[i]=0;
-      drops[i]++;
     }
     requestAnimationFrame(draw);
   }
