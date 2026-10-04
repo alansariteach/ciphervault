@@ -176,6 +176,12 @@ a{color:inherit;text-decoration:none}
 .url-row input{flex:1}
 .url-fav{width:38px;height:38px;object-fit:contain;opacity:0;border-radius:8px;background:var(--panel);border:1px solid var(--line);flex-shrink:0}
 .vault-card__name{font-weight:600;font-size:15px;flex:1;line-height:1.3;word-break:break-word}
+.weak-badge{font-size:13px;margin-inline-start:3px;vertical-align:middle;cursor:help}
+.lvl-badge{display:inline-block;width:9px;height:9px;border-radius:50%;margin-inline-start:5px;vertical-align:middle;background:var(--muted2)}
+.lvl-badge.lvl-0,.lvl-badge.lvl-1{background:var(--red);box-shadow:0 0 4px var(--red-glow)}
+.lvl-badge.lvl-2{background:var(--amber)}
+.lvl-badge.lvl-3{background:var(--green)}
+.lvl-badge.lvl-4{background:var(--green);box-shadow:0 0 5px var(--green)}
 .vault-card__user{font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:6px;word-break:break-all}
 .vault-card__pw{display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.35);border:1px solid var(--line);
   border-radius:10px;padding:9px 12px;font-family:var(--mono);font-size:13px;color:var(--muted)}
@@ -186,6 +192,11 @@ a{color:inherit;text-decoration:none}
 .vault-card__date{font-size:11px;color:var(--muted2)}
 .vault-card__btns{display:flex;gap:6px;margin-top:2px}
 .vault-card__btns .btn--small{flex:1;justify-content:center}
+.vault-stats{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:2px 0 16px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:9px 14px}
+.vault-stats .vs{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--muted)}
+.vault-stats .vs b{font-size:14px;color:var(--txt);font-family:var(--mono)}
+.vault-stats .vs-warn b{color:var(--red-soft)}
+.vault-stats .vs + .vs::before{content:"·";color:var(--muted2);margin:0 2px}
 
 .empty-vault{text-align:center;padding:50px 20px;animation:cardIn .4s var(--ease)}
 .empty-vault img{width:90px;height:90px;margin:0 auto 20px;display:block;opacity:.85;
@@ -513,6 +524,10 @@ const I18N = {
         bioAskPw:"أدخل كلمة المرور الرئيسية لتفعيل البصمة على هذا الجهاز.",
         bioBadPw:"كلمة المرور غير صحيحة.",
         bioNotSetup:"لم تُفعّل البصمة بعد على هذا الجهاز.",
+    weakTitle:"كلمة المرور ضعيفة — يُنصح بتغييرها",
+    justNow:"الآن", minAgo:"دقيقة مضت", hrAgo:"ساعة مضت", dayAgo:"يوم مضى",
+    statAccounts:"حساب", statWeak:"ضعيفة", statExport:"منذ آخر تصدير",
+    autoLocked:"تم قفل الخزنة تلقائياً بسبب عدم النشاط.",
     myVault:"خزنتي", searchPh:"بحث في الحسابات...",
     addAccount:"+ إضافة حساب", checkPw:"فحص كلمة المرور",
     checkTitle:"فحص كلمة المرور",
@@ -580,6 +595,10 @@ const I18N = {
         bioAskPw:"Enter your master password to enable biometric on this device.",
         bioBadPw:"Incorrect password.",
         bioNotSetup:"Biometric is not enabled on this device yet.",
+    weakTitle:"Weak password — consider changing",
+    justNow:"just now", minAgo:"min ago", hrAgo:"hr ago", dayAgo:"day ago",
+    statAccounts:"accounts", statWeak:"weak", statExport:"since last export",
+    autoLocked:"Vault locked automatically due to inactivity.",
     myVault:"My Vault", searchPh:"Search accounts...",
     addAccount:"+ Add Account", checkPw:"Password Check",
     checkTitle:"Password Check",
@@ -840,10 +859,20 @@ function renderVault(){
   const filtered=entries.filter(en=>
     (en.name||"").toLowerCase().includes(q)||
     (en.user||"").toLowerCase().includes(q)||
-    (en.cat||"").toLowerCase().includes(q));
+    (en.url||"").toLowerCase().includes(q)||
+    (en.notes||"").toLowerCase().includes(q));
+  // quick stats bar
+  const weakCount=entries.filter(e=>pwIsWeak(e.pw)).length;
+  const lastExport=localStorage.getItem("cv.exportAt");
+  const stats='<div class="vault-stats"><span class="vs"><b>'+entries.length+'</b> '+t("statAccounts")+'</span>'+
+      '<span class="vs'+(weakCount?", vs-warn":"")+'"><b>'+weakCount+'</b> '+t("statWeak")+'</span>'+
+      (lastExport?'<span class="vs"><b>'+relDate(+lastExport)+'</b> '+t("statExport")+'</span>':"")+
+      '</div>';
+  // clear old stats
+  const old=document.getElementById("vault-stats-el");if(old)old.remove();
   const c=$("#vault-content");
   if(!entries.length){
-    c.innerHTML=`<div class="empty-vault">
+    c.innerHTML=`${stats}<div class="empty-vault">
       <img src="assets/personal-biohazard-mark.png" alt="" />
       <h3>${t("emptyTitle")}</h3><p>${t("emptyDesc")}</p>
       <button class="btn btn--primary" data-nav="add">${t("emptyBtn")}</button></div>`;
@@ -851,10 +880,10 @@ function renderVault(){
     return;
   }
   if(!filtered.length){
-    c.innerHTML=`<div class="empty-vault"><h3>${t("noResults")}</h3></div>`;
+    c.innerHTML=`${stats}<div class="empty-vault"><h3>${t("noResults")}</h3></div>`;
     return;
   }
-  c.innerHTML=`<div class="cards-grid">${filtered.map(en=>cardHTML(en)).join("")}</div>`;
+  c.innerHTML=`${stats}<div class="cards-grid">${filtered.map(en=>cardHTML(en)).join("")}</div>`;
   c.querySelectorAll("[data-copy]").forEach(b=>b.onclick=()=>copyField(b.dataset.copy,b.dataset.type));
   c.querySelectorAll("[data-eye-card]").forEach(b=>b.onclick=()=>toggleCardPw(b.dataset.eyeCard));
   c.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>openAdd(b.dataset.edit));
@@ -868,14 +897,19 @@ function faviconUrl(url){
 }
 function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));}
 function cardHTML(en){
-  const date=en.updated?new Date(en.updated).toLocaleDateString(lang==="ar"?"ar-EG":"en-US"):"";
+  const date=relDate(en.updated);
+  const weak=pwIsWeak(en.pw);
   const site=en.url?`<a class="vault-card__site" href="${esc(en.url)}" target="_blank" rel="noopener noreferrer">↗ ${esc(en.url)}</a>`:"";
   const fv=faviconUrl(en.url);
   const ico=fv?`<img class="vault-card__fav" src="${esc(fv)}" data-name="${esc(en.name)}" alt="" onerror="this.closest('.vault-card__ico').innerHTML='🔑';" />`:"🔑";
+  const lvl=pwLevel(en.pw);
+  const lvlLabel=t(["pwWeak","pwWeak","pwMid","pwStrong","pwVStrong"][lvl]);
+  const badge=weak?`<span class="weak-badge" title="${t("weakTitle")}">⚠️</span>`:
+    `<span class="lvl-badge lvl-${lvl}" title="${lvlLabel}"></span>`;
   return `<div class="vault-card" data-id="${esc(en.id)}">
     <div class="vault-card__head">
       <div class="vault-card__ico">${ico}</div>
-      <div><div class="vault-card__name">${esc(en.name)}</div>
+      <div><div class="vault-card__name">${esc(en.name)} ${badge}</div>
       <div class="vault-card__user">@ ${esc(en.user)}</div></div>
     </div>
     <div class="vault-card__pw"><span class="pw-text" id="pw-${esc(en.id)}">••••••••</span>
@@ -985,6 +1019,27 @@ function strength(pw){
   if(pw.length>=16)s++;
   if(s<=2)return 0;if(s<=3)return 1;if(s<=4)return 2;return 3;
 }
+/* 0=ضعيفة جدا 1=ضعيفة 2=متوسطة 3=قوية 4=قوية جدا */
+function pwLevel(pw){
+  if(!pw)return 0;
+  let s=0;
+  if(pw.length>=8)s++;if(pw.length>=12)s++;if(pw.length>=16)s++;
+  if(/[A-Z]/.test(pw)&&/[a-z]/.test(pw))s++;
+  if(/\d/.test(pw))s++;
+  if(/[^A-Za-z0-9]/.test(pw))s++;
+  if(pw.length<8)return 0;
+  if(s<=2)return 1;if(s<=4)return 2;if(s<=5)return 3;return 4;
+}
+function pwIsWeak(pw){return pwLevel(pw)<=1;}
+function relDate(ts){
+  if(!ts)return "";
+  const d=(Date.now()-ts)/1000,day=86400;
+  if(d<60)return t("justNow");
+  if(d<3600)return Math.floor(d/60)+" "+t("minAgo");
+  if(d<day)return Math.floor(d/3600)+" "+t("hrAgo");
+  if(d<day*7)return Math.floor(d/day)+" "+t("dayAgo");
+  return new Date(ts).toLocaleDateString(lang==="ar"?"ar-EG":"en-US");
+}
 async function sha1Hex(str){
   const buf=await crypto.subtle.digest("SHA-1",new TextEncoder().encode(str));
   return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("");
@@ -1029,8 +1084,9 @@ async function doExport(){
   const blob=new Blob([JSON.stringify({app:"ciphervault",v:1,salt:cfg.salt,iterations:cfg.iterations,env})],{type:"application/json"});
   const d=new Date(),ds=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);
-  a.download=`ciphervault-backup-${ds}.cvault.json`;a.click();URL.revokeObjectURL(a.href);
-  toast(t("exportOk"));
+    a.download=`ciphervault-backup-${ds}.cvault.json`;a.click();URL.revokeObjectURL(a.href);
+    localStorage.setItem("cv.exportAt",String(Date.now()));
+    toast(t("exportOk"));
 }
 function doImport(){
   const inp=document.createElement("input");inp.type="file";inp.accept=".json,.cvault.json";
@@ -1133,6 +1189,36 @@ async function doInstall(){
   }else{toast(t("installUnsupported"),true);}
 }
 
+/* ---------------- Auto-lock on inactivity ---------------- */
+let __lastAct=Date.now();
+const AUTO_LOCK_MS=90000;   // 90s idle -> lock
+function touchActivity(){__lastAct=Date.now();}
+function startAutoLock(){
+  const evs=["keydown","mousedown","touchstart","scroll","wheel"];
+  evs.forEach(e=>document.addEventListener(e,touchActivity,true));
+  // secure: wipe in-memory keys when the tab is hidden/minimized/closed
+  document.addEventListener("visibilitychange",()=>{
+    if(document.hidden&&state.key){state={cfg:loadCfg(),vault:null,key:null};}
+  });
+  window.addEventListener("beforeunload",()=>{
+    state={cfg:null,vault:null,key:null};
+    sessionStorage.clear();
+  });
+  setInterval(()=>{
+    // only when a vault is open (state.key set) and not on access screen
+    if(!state.key||!state.vault)return;
+    const acc=document.querySelector(".screen[data-screen=access]");
+    if(acc&&!acc.classList.contains("hidden"))return;
+    if(Date.now()-__lastAct>AUTO_LOCK_MS){
+      state={cfg:loadCfg(),vault:null,key:null};
+      closeDrawer();
+      renderAccess();
+      showScreen("access");
+      toast(t("autoLocked"));
+    }
+  },10000);
+}
+
 /* ---------------- Lock ---------------- */
 function lockVault(){
   const doLock=async()=>{
@@ -1233,6 +1319,7 @@ function boot(){
   applyLang();
   initRain();
   bind();
+  startAutoLock();
   renderAccess();
   showScreen("access");
   // restore last session if unlocked (keep simple: always show access)
