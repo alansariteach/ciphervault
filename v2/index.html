@@ -687,6 +687,7 @@ function loadCfg(){try{return JSON.parse(localStorage.getItem(CFG_KEY));}catch(e
 function saveCfg(c){localStorage.setItem(CFG_KEY,JSON.stringify(c));}
 
 /* ---------------- Lockout ---------------- */
+const ATTEMPT_RESET_MS=15*60*1000;   // counter resets after 15 min idle
 function getLock(){try{return JSON.parse(localStorage.getItem(LOCK_KEY));}catch(e){return null;}}
 function setLock(o){localStorage.setItem(LOCK_KEY,JSON.stringify(o));}
 function isLocked(){
@@ -810,14 +811,18 @@ function renderAccess(){
     return;
   }
   const l=getLock();
-  const used=l?l.attempts:0;
-  if(creating){
-    $("#attempts").classList.add("hidden");
-  }else{
-    $("#attempts").classList.remove("hidden");
-    const dots=$("#attempt-dots");dots.innerHTML="";
-    for(let i=0;i<3;i++){const d=document.createElement("span");d.className="dot"+(i<used?" used":"");dots.appendChild(d);}
-  }
+    let used=0;
+    if(l&&l.attempts&&!isLocked()){
+      // only count attempts that are still within the reset window
+      used=(!l.at||Date.now()-l.at<=ATTEMPT_RESET_MS)?l.attempts:0;
+    }
+    if(creating){
+      $("#attempts").classList.add("hidden");
+    }else{
+      $("#attempts").classList.remove("hidden");
+      const dots=$("#attempt-dots");dots.innerHTML="";
+      for(let i=0;i<3;i++){const d=document.createElement("span");d.className="dot"+(i<used?" used":"");dots.appendChild(d);}
+    }
 }
 
 async function handleAccess(e){
@@ -836,16 +841,20 @@ async function handleAccess(e){
     return;
   }
   showLoading(t("opening"));
-  const res=await tryUnlock(pw);
-  hideLoading();
-  if(res.ok){setLock(null);enterVault();}
-  else{
-    let l=getLock()||{attempts:0};l.attempts=(l.attempts||0)+1;
-    if(l.attempts>=3){l.until=Date.now()+15*60*1000;l.attempts=3;}
-    setLock(l);
-    if(l.attempts>=3){toast(t("locked"),true);renderAccess();}
-    else{toast(t("wrongPw"),true);renderAccess();}
-  }
+    const res=await tryUnlock(pw);
+    hideLoading();
+    if(res.ok){setLock(null);enterVault();}
+    else{
+      let l=getLock()||{attempts:0};
+      // reset the counter if enough idle time passed since the last wrong try
+      if(l.at&&Date.now()-l.at>ATTEMPT_RESET_MS)l={attempts:0};
+      l.attempts=(l.attempts||0)+1;
+      l.at=Date.now();
+      if(l.attempts>=3){l.until=Date.now()+15*60*1000;l.attempts=3;l.at=Date.now();}
+      setLock(l);
+      if(l.attempts>=3){toast(t("locked"),true);renderAccess();}
+      else{toast(t("wrongPw"),true);renderAccess();}
+    }
 }
 
 /* ---------------- Vault screen ---------------- */
