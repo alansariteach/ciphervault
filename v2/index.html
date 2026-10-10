@@ -528,6 +528,8 @@ const I18N = {
     justNow:"الآن", minAgo:"دقيقة مضت", hrAgo:"ساعة مضت", dayAgo:"يوم مضى",
     statAccounts:"حساب", statWeak:"ضعيف", statExport:"منذ آخر تصدير",
     autoLocked:"تم قفل الخزنة تلقائياً بسبب عدم النشاط.",
+    cryptoUnavailable:"التشفير غير متاح في هذا المتصفح/الاتصال (يلزم https أو localhost).",
+    createFailed:"فشل إنشاء الخزنة:",
     myVault:"خزنتي", searchPh:"بحث في الحسابات...",
     addAccount:"+ إضافة حساب", checkPw:"فحص كلمة المرور",
     checkTitle:"فحص كلمة المرور",
@@ -599,6 +601,8 @@ const I18N = {
     justNow:"just now", minAgo:"min ago", hrAgo:"hr ago", dayAgo:"day ago",
     statAccounts:"accounts", statWeak:"weak", statExport:"since last export",
     autoLocked:"Vault locked automatically due to inactivity.",
+    cryptoUnavailable:"Encryption is unavailable in this browser/connection (https or localhost required).",
+    createFailed:"Failed to create vault:",
     myVault:"My Vault", searchPh:"Search accounts...",
     addAccount:"+ Add Account", checkPw:"Password Check",
     checkTitle:"Password Check",
@@ -829,6 +833,7 @@ function renderAccess(){
 async function handleAccess(e){
   e.preventDefault();
   if(isLocked()){toast(t("locked"),true);renderAccess();return;}
+  if(!crypto||!crypto.subtle){toast(t("cryptoUnavailable"),true);return;}
   const pw=$("#master-pw").value;
   if(!pw){toast(t("fillRequired"),true);return;}
   const cfg=loadCfg();
@@ -838,7 +843,7 @@ async function handleAccess(e){
     if(pw!==cf){toast(t("pwMismatch"),true);return;}
     showLoading(t("creating"));
     try{await setupVault(pw);hideLoading();enterVault();}
-    catch(err){hideLoading();toast(t("wrongPw"),true);}
+    catch(err){hideLoading();toast(t("createFailed")+(err&&err.message?": "+err.message:""),true);}
     return;
   }
   showLoading(t("opening"));
