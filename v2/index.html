@@ -916,7 +916,7 @@ function cardHTML(en){
   const weak=pwIsWeak(en.pw);
   const site=en.url?`<a class="vault-card__site" href="${esc(en.url)}" target="_blank" rel="noopener noreferrer">↗ ${esc(en.url)}</a>`:"";
   const fv=faviconUrl(en.url);
-  const ico=fv?`<img class="vault-card__fav" src="${esc(fv)}" data-name="${esc(en.name)}" alt="" onerror="this.closest('.vault-card__ico').innerHTML='🔑';" />`:"🔑";
+  const ico=fv?`<img class="vault-card__fav" loading="lazy" decoding="async" src="${esc(fv)}" data-name="${esc(en.name)}" alt="" onerror="this.closest('.vault-card__ico').innerHTML='🔑';" />`:"🔑";
   const lvl=pwLevel(en.pw);
   const lvlLabel=t(["pwWeak","pwWeak","pwMid","pwStrong","pwVStrong"][lvl]);
   const badge=weak?`<span class="weak-badge" title="${t("weakTitle")}">⚠️</span>`:
@@ -1206,15 +1206,13 @@ async function doInstall(){
 
 /* ---------------- Auto-lock on inactivity ---------------- */
 let __lastAct=Date.now();
-const AUTO_LOCK_MS=90000;   // 90s idle -> lock
+const AUTO_LOCK_MS=5*60*1000;   // 5 min idle -> lock (not too aggressive on mobile)
 function touchActivity(){__lastAct=Date.now();}
 function startAutoLock(){
   const evs=["keydown","mousedown","touchstart","scroll","wheel"];
   evs.forEach(e=>document.addEventListener(e,touchActivity,true));
-  // secure: wipe in-memory keys when the tab is hidden/minimized/closed
-  document.addEventListener("visibilitychange",()=>{
-    if(document.hidden&&state.key){state={cfg:loadCfg(),vault:null,key:null};}
-  });
+  // wipe in-memory keys ONLY when the tab is actually closed/refreshed,
+  // not on mere visibility change (which caused sudden locks on mobile)
   window.addEventListener("beforeunload",()=>{
     state={cfg:null,vault:null,key:null};
     sessionStorage.clear();
