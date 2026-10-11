@@ -147,8 +147,8 @@ a{color:inherit;text-decoration:none}
 
 .attempts{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:16px;
   font-size:12px;color:var(--muted);font-family:var(--mono);letter-spacing:.04em}
-.attempts .dots{display:flex;gap:6px}
-.attempts .dot{width:8px;height:8px;border-radius:50%;background:var(--line);border:1px solid var(--muted2)}
+.attempts .dots{display:flex;gap:4px;flex-wrap:wrap;justify-content:center}
+.attempts .dot{width:6px;height:6px;border-radius:50%;background:var(--line);border:1px solid var(--muted2)}
 .attempts .dot.used{background:var(--red);border-color:var(--red);box-shadow:0 0 8px var(--red-glow)}
 
 .lock-msg{text-align:center;padding:20px;margin-top:10px}
@@ -380,7 +380,7 @@ a{color:inherit;text-decoration:none}
           <span data-i18n="attemptsBefore">محاولات قبل قفل الوصول</span>
         </div>
         <p class="attempts" style="margin-top:14px;font-family:var(--font);letter-spacing:0;font-size:12px">
-          <span data-i18n="localNote">تظل بياناتك مشفرة محليا على هذا الجهاز. بعد 3 محاولات خاطئة يقفل.</span>
+          <span data-i18n="localNote">تظل بياناتك مشفرة محليا على هذا الجهاز. بعد 10 محاولات خاطئة يقفل.</span>
         </p>
 
         <div class="lock-msg hidden" id="lock-msg">
@@ -526,10 +526,10 @@ const I18N = {
     pwPlaceholder:"أدخل كلمة المرور الرئيسية", confirmPlaceholder:"أعد إدخال كلمة المرور",
     accessBtn:"فتح الخزنة", createBtn:"إنشاء الخزنة",
     attemptsLabel:"متبقي", attemptsBefore:"محاولات قبل قفل الوصول",
-    localNote:"تظل بياناتك مشفرة محليا على هذا الجهاز. بعد 3 محاولات خاطئة يقفل.",
+    localNote:"تظل بياناتك مشفرة محليا على هذا الجهاز. بعد 10 محاولات خاطئة يقفل.",
     lockTitle:"تم قفل الوصول مؤقتا",
     lockDesc:"بسبب عدة محاولات خاطئة، تم قفل الخزنة لمدة 15 دقيقة. حاول مرة أخرى لاحقا.",
-    footerTag:"AES-256 / محلي فقط · ٣ محاولات كحد أقصى",
+    footerTag:"AES-256 / محلي فقط · ١٠ محاولات كحد أقصى",
     footerDate:"تاريخ تصميم الموقع: 2026-10-03",
         footerBy:"صمم بواسطة Alansari.Tech",
         back:"الرجوع",
@@ -599,10 +599,10 @@ const I18N = {
     pwPlaceholder:"Enter master password", confirmPlaceholder:"Confirm master password",
     accessBtn:"Unlock Vault", createBtn:"Create Vault",
     attemptsLabel:"", attemptsBefore:"attempts available",
-    localNote:"Your data stays encrypted locally on this device. Locks after 3 wrong attempts.",
-    lockTitle:"Access locked temporarily",
-    lockDesc:"Too many wrong attempts. The vault is locked for 15 minutes. Try again later.",
-    footerTag:"AES-256 / Local only · Max 3 attempts",
+    localNote:"Your data stays encrypted locally on this device. Locks after 10 wrong attempts.",
+        lockTitle:"Access locked temporarily",
+        lockDesc:"Too many wrong attempts. The vault is locked for 15 minutes. Try again later.",
+        footerTag:"AES-256 / Local only · Max 10 attempts",
     footerDate:"Site designed on: 2026-10-03",
         footerBy:"Designed by Alansari.Tech",
         back:"Back",
@@ -706,6 +706,7 @@ function saveCfg(c){localStorage.setItem(CFG_KEY,JSON.stringify(c));}
 
 /* ---------------- Lockout ---------------- */
 const ATTEMPT_RESET_MS=15*60*1000;   // counter resets after 15 min idle
+const MAX_ATTEMPTS=10;                // max wrong attempts before lockout
 function getLock(){try{return JSON.parse(localStorage.getItem(LOCK_KEY));}catch(e){return null;}}
 function setLock(o){localStorage.setItem(LOCK_KEY,JSON.stringify(o));}
 function isLocked(){
@@ -840,7 +841,7 @@ function renderAccess(){
     }else{
       $("#attempts").classList.remove("hidden");
       const dots=$("#attempt-dots");dots.innerHTML="";
-      for(let i=0;i<3;i++){const d=document.createElement("span");d.className="dot"+(i<used?" used":"");dots.appendChild(d);}
+      for(let i=0;i<MAX_ATTEMPTS;i++){const d=document.createElement("span");d.className="dot"+(i<used?" used":"");dots.appendChild(d);}
     }
 }
 
@@ -870,9 +871,9 @@ async function handleAccess(e){
           if(!l.at||Date.now()-l.at>ATTEMPT_RESET_MS)l={attempts:0};
           l.attempts=(l.attempts||0)+1;
           l.at=Date.now();
-      if(l.attempts>=3){l.until=Date.now()+15*60*1000;l.attempts=3;l.at=Date.now();}
+      if(l.attempts>=MAX_ATTEMPTS){l.until=Date.now()+15*60*1000;l.attempts=MAX_ATTEMPTS;l.at=Date.now();}
       setLock(l);
-      if(l.attempts>=3){toast(t("locked"),true);renderAccess();}
+      if(l.attempts>=MAX_ATTEMPTS){toast(t("locked"),true);renderAccess();}
       else{toast(t("wrongPw"),true);renderAccess();}
     }
 }
