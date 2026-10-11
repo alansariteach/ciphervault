@@ -1,0 +1,17 @@
+{
+  "name": "CipherVault — خزنة محلية مشفرة",
+  "short_name": "CipherVault",
+  "description": "خزنة كلمات مرور محلية مشفرة. بياناتك على جهازك وحدك.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#030303",
+  "theme_color": "#030303",
+  "dir": "rtl",
+  "lang": "ar",
+  "icons": [
+    { "src": "assets/pwa-icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "assets/pwa-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/pwa-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
