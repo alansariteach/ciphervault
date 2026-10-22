@@ -8,6 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="description" content="CipherVault — خزنة كلمات مرور محلية مشفرة. بياناتك على جهازك وحدك." />
 <meta name="referrer" content="no-referrer" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://www.google.com; connect-src https://api.pwnedpasswords.com; manifest-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'" />
 <title>CIPHERVAULT | خزنة مشفرة محلياً</title>
 <link rel="canonical" href="https://alansariteach.github.io/ciphervault/v2/" />
 <!-- Social / Telegram preview -->
@@ -472,6 +473,7 @@ a{color:inherit;text-decoration:none}
       <button class="drawer__item" data-nav="import" data-i18n="import">استيراد نسخة مشفرة</button>
       <button class="drawer__item" data-nav="export" data-i18n="export">تصدير نسخة مشفرة</button>
       <button class="drawer__item" data-nav="biometric" data-i18n="biometric">تفعيل البصمة لهذا الجهاز</button>
+      <button class="drawer__item" id="btn-fav-toggle" data-i18n="favicons">عرض أيقونات المواقع (يرسل النطاقات لجوجل)</button>
       <button class="drawer__item" data-nav="install" data-i18n="install">تثبيت التطبيق</button>
       <div class="drawer__sep"></div>
       <a class="drawer__item" href="https://t.me/alansari_tech" target="_blank" rel="noopener noreferrer"><span class="di-ico">✈</span>Telegram</a>
@@ -539,6 +541,11 @@ const I18N = {
         bioAskPw:"أدخل كلمة المرور الرئيسية لتفعيل البصمة على هذا الجهاز.",
         bioBadPw:"كلمة المرور غير صحيحة.",
         bioNotSetup:"لم تُفعّل البصمة بعد على هذا الجهاز.",
+        bioNoPRF:"متصفحك أو جهازك لا يدعم ربط البصمة بالتشفير بأمان، فلن نحفظ كلمة المرور للبصمة.",
+        bioReenroll:"تم تحديث نظام البصمة. فعّلها من جديد لهذا الجهاز.",
+        leakErr:"تعذّر الفحص الآن (لا يوجد اتصال؟). حاول مرة أخرى.",
+    favicons:"عرض أيقونات المواقع (يرسل النطاقات لجوجل)",
+    favOn:"تم تفعيل أيقونات المواقع.", favOff:"تم إيقاف أيقونات المواقع.",
     weakTitle:"كلمة المرور ضعيفة — يُنصح بتغييرها",
     justNow:"الآن", minAgo:"دقيقة مضت", hrAgo:"ساعة مضت", dayAgo:"يوم مضى",
     statAccounts:"حساب", statWeak:"ضعيف", statExport:"منذ آخر تصدير",
@@ -612,6 +619,11 @@ const I18N = {
         bioAskPw:"Enter your master password to enable biometric on this device.",
         bioBadPw:"Incorrect password.",
         bioNotSetup:"Biometric is not enabled on this device yet.",
+        bioNoPRF:"Your browser/device can't bind biometrics to encryption securely, so the password won't be stored for biometric unlock.",
+        bioReenroll:"Biometric system was upgraded. Please enable it again on this device.",
+        leakErr:"Couldn't check right now (offline?). Please try again.",
+    favicons:"Show site icons (sends domains to Google)",
+    favOn:"Site icons enabled.", favOff:"Site icons disabled.",
     weakTitle:"Weak password — consider changing",
     justNow:"just now", minAgo:"min ago", hrAgo:"hr ago", dayAgo:"day ago",
     statAccounts:"accounts", statWeak:"weak", statExport:"since last export",
@@ -677,7 +689,8 @@ function applyLang(){
 }
 
 /* ---------------- Storage keys ---------------- */
-const CFG_KEY="cv.cfg"; const VAULT_KEY="cv.vault"; const LOCK_KEY="cv.lock";
+const CFG_KEY="cv.cfg"; const VAULT_KEY="cv.vault"; const LOCK_KEY="cv.lock"; const FAV_KEY="cv.favicons";
+function faviconsEnabled(){try{return localStorage.getItem(FAV_KEY)==="1";}catch(e){return false;}}
 const ITER=600000; const SENTINEL="CIPHERVAULT_OK";
 
 /* ---------------- Crypto ---------------- */
@@ -921,6 +934,9 @@ function renderVault(){
   c.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>delAccount(b.dataset.del));
 }
 function faviconUrl(url){
+  // Privacy: fetching a remote favicon reveals the account's domain to Google.
+  // Off by default; only when the user explicitly opts in via the drawer toggle.
+  if(!faviconsEnabled())return null;
   try{
     const u=new URL(url);
     return "https://www.google.com/s2/favicons?domain="+encodeURIComponent(u.hostname)+"&sz=48";
@@ -1089,16 +1105,20 @@ async function runCheck(){
   try{
     const hash=await sha1Hex(pw);
     const prefix=hash.slice(0,5).toUpperCase(),suffix=hash.slice(5).toUpperCase();
-    const r=await fetch("https://api.pwnedpasswords.com/range/"+prefix);
+    // Add-Padding hides how many matches a prefix has from a network observer.
+    const r=await fetch("https://api.pwnedpasswords.com/range/"+prefix,{headers:{"Add-Padding":"true"}});
+    if(!r.ok)throw new Error("http "+r.status);
     const body=await r.text();
-    const found=body.split("\r\n").some(line=>line.split(":")[0]===suffix);
+    // padded entries have a count of 0 — ignore them so padding never reads as a match
+    const found=body.split("\n").some(line=>{const p=line.trim().split(":");return p[0]===suffix&&p[1]&&p[1].trim()!=="0";});
     let html,cls;
     if(pw.length<8){html=t("pwLenNote");cls="warn";}
     else if(found){html=t("leakFound");cls="warn";}
     else{html=t("leakSafe");cls="ok";}
-    res.innerHTML=html;res.className="check-result show "+cls;
+    res.textContent=html;res.className="check-result show "+cls;
   }catch(e){
-    res.innerHTML=t("leakSafe");res.className="check-result show ok";
+    // fail closed: never claim "safe" when the check didn't actually run
+    res.textContent=t("leakErr");res.className="check-result show warn";
   }
   btn.disabled=false;btn.textContent=t("checkNow");
 }
@@ -1153,62 +1173,77 @@ function bioChallenge(){
 }
 function bioBufToB64(buf){const b=new Uint8Array(buf);let s="";for(let i=0;i<b.length;i++)s+=String.fromCharCode(b[i]);return btoa(s);}
 function bioB64ToBuf(b64){const s=atob(b64);const b=new Uint8Array(s.length);for(let i=0;i<s.length;i++)b[i]=s.charCodeAt(i);return b.buffer;}
-async function bioDeriveWrap(bioSecret){
-  // AES-GCM key from the biometric secret (only usable on this device)
-  return crypto.subtle.importKey("raw",bioB64ToBuf(bioSecret),"AES-GCM",false,["encrypt","decrypt"]);
+// The wrapping key is derived from the WebAuthn PRF (hmac-secret) output, which
+// only the platform authenticator can produce after a successful biometric/PIN
+// ceremony. It is NEVER stored — so localStorage alone cannot reveal the master
+// password. (HKDF binds it to a stored, non-secret salt.)
+async function bioWrapKey(prfOutput,hkdfSaltBuf){
+  const base=await crypto.subtle.importKey("raw",prfOutput,"HKDF",false,["deriveKey"]);
+  return crypto.subtle.deriveKey(
+    {name:"HKDF",hash:"SHA-256",salt:hkdfSaltBuf,info:new TextEncoder().encode("ciphervault-bio-v2")},
+    base,{name:"AES-GCM",length:256},false,["encrypt","decrypt"]);
 }
-async function bioWrap(secretB64,pt){
-  const key=await bioDeriveWrap(secretB64);
-  return encrypt(key,pt);
-}
-async function bioUnwrap(secretB64,env){
-  const key=await bioDeriveWrap(secretB64);
-  return decrypt(key,env);
-}
+function bioGetPRF(res){const x=res&&res.getClientExtensionResults&&res.getClientExtensionResults();return x&&x.prf;}
 async function doBiometric(){
-  const supported=credSupported();
-  if(!supported){toast(t("bioUnsupported"),true);return;}
+  if(!credSupported()){toast(t("bioUnsupported"),true);return;}
   // require the master password so we can store it wrapped for later biometric unlock
   const pw=await prompt(t("bioAskPw"));
   if(!pw)return;
   const res=await tryUnlock(pw);
   if(!res.ok){toast(t("bioBadPw"),true);return;}
   try{
-    const ch=bioChallenge();
+    const prfInput=new Uint8Array(32);crypto.getRandomValues(prfInput);
+    const uid=new Uint8Array(16);crypto.getRandomValues(uid);
     const cred=await navigator.credentials.create({
-      publicKey:{challenge:ch,rp:{name:"CipherVault"},
-        user:{id:bioChallenge(),name:"ciphervault",displayName:"CipherVault"},
-        pubKeyCredParams:[{type:"public-key",alg:-7}],timeout:60000,
+      publicKey:{challenge:bioChallenge(),rp:{name:"CipherVault"},
+        user:{id:uid,name:"ciphervault",displayName:"CipherVault"},
+        pubKeyCredParams:[{type:"public-key",alg:-7},{type:"public-key",alg:-257}],timeout:60000,
         authenticatorSelection:{authenticatorAttachment:"platform",userVerification:"required"},
-        attestation:"none"}});
+        attestation:"none",extensions:{prf:{}}}});
     if(!cred)throw new Error("no-cred");
-        // Wrap the master password with a strong random secret (persisted locally).
-        // Unsealing still requires the WebAuthn (Windows Hello PIN/fingerprint) ceremony below.
-        const sec=new Uint8Array(32);crypto.getRandomValues(sec);
-        const secretB64=bioBufToB64(sec);
-        const wrapped=await bioWrap(secretB64,pw);
-        const record={id:bioBufToB64(cred.rawId||cred.id),secret:secretB64,wrapped,enabledAt:Date.now()};
-        localStorage.setItem(BIO_KEY,JSON.stringify(record));
-        toast(t("bioOk"));
-      }catch(e){toast(t("bioUnsupported"),true);}
-    }
-    async function bioUnlock(){
-      const recRaw=localStorage.getItem(BIO_KEY);
-      if(!recRaw){toast(t("bioNotSetup"),true);return;}
-      const rec=JSON.parse(recRaw);
-      try{
-        const ch=bioChallenge();
-        const assert=await navigator.credentials.get({
-          publicKey:{challenge:ch,timeout:60000,
-            allowCredentials:[{type:"public-key",id:bioB64ToBuf(rec.id)}],
-            userVerification:"required"}});
-        if(!assert)throw new Error("no-assert");
-        const pw=await bioUnwrap(rec.secret,rec.wrapped);
-        const r=await tryUnlock(pw);
-        if(!r.ok){toast(t("bioBadPw"),true);return;}
-        enterVault();
-      }catch(e){toast(t("bioUnsupported"),true);}
-    }
+    // If PRF isn't supported we must NOT fall back to storing the key in the clear.
+    const prfEnabled=(bioGetPRF(cred)||{}).enabled;
+    if(prfEnabled===false){toast(t("bioNoPRF"),true);return;}
+    // Obtain the PRF output via an assertion (reliable across platforms).
+    const asrt=await navigator.credentials.get({
+      publicKey:{challenge:bioChallenge(),timeout:60000,
+        allowCredentials:[{type:"public-key",id:cred.rawId}],
+        userVerification:"required",
+        extensions:{prf:{eval:{first:prfInput}}}}});
+    const prf=bioGetPRF(asrt);
+    if(!prf||!prf.results||!prf.results.first){toast(t("bioNoPRF"),true);return;}
+    const hkdfSalt=new Uint8Array(16);crypto.getRandomValues(hkdfSalt);
+    const wrapKey=await bioWrapKey(prf.results.first,hkdfSalt);
+    const wrapped=await encrypt(wrapKey,pw);
+    const record={v:2,id:bioBufToB64(cred.rawId),prfInput:bioBufToB64(prfInput),
+      hkdfSalt:bioBufToB64(hkdfSalt),wrapped,enabledAt:Date.now()};
+    localStorage.setItem(BIO_KEY,JSON.stringify(record));
+    toast(t("bioOk"));
+  }catch(e){toast(t("bioUnsupported"),true);}
+}
+async function bioUnlock(){
+  const recRaw=localStorage.getItem(BIO_KEY);
+  if(!recRaw){toast(t("bioNotSetup"),true);return;}
+  let rec;try{rec=JSON.parse(recRaw);}catch(e){rec=null;}
+  // Reject (and delete) any insecure legacy record that stored the key locally.
+  if(!rec||rec.v!==2||!rec.prfInput||!rec.hkdfSalt){
+    localStorage.removeItem(BIO_KEY);toast(t("bioReenroll"),true);renderAccess();return;
+  }
+  try{
+    const asrt=await navigator.credentials.get({
+      publicKey:{challenge:bioChallenge(),timeout:60000,
+        allowCredentials:[{type:"public-key",id:bioB64ToBuf(rec.id)}],
+        userVerification:"required",
+        extensions:{prf:{eval:{first:bioB64ToBuf(rec.prfInput)}}}}});
+    const prf=bioGetPRF(asrt);
+    if(!prf||!prf.results||!prf.results.first)throw new Error("no-prf");
+    const wrapKey=await bioWrapKey(prf.results.first,bioB64ToBuf(rec.hkdfSalt));
+    const pw=await decrypt(wrapKey,rec.wrapped);
+    const r=await tryUnlock(pw);
+    if(!r.ok){toast(t("bioBadPw"),true);return;}
+    enterVault();
+  }catch(e){toast(t("bioUnsupported"),true);}
+}
 
 /* ---------------- Install ---------------- */
 async function doInstall(){
@@ -1267,6 +1302,13 @@ function bind(){
   $("#drawer-overlay").addEventListener("click",closeDrawer);
   $("#btn-lang").addEventListener("click",()=>{lang=lang==="ar"?"en":"ar";applyLang();renderAccess();if(!state.vault)return;renderVault();});
   $("#btn-lock").addEventListener("click",lockVault);
+    $("#btn-fav-toggle").addEventListener("click",()=>{
+      const on=!faviconsEnabled();
+      try{localStorage.setItem(FAV_KEY,on?"1":"0");}catch(e){}
+      toast(t(on?"favOn":"favOff"));
+      closeDrawer();
+      if(state.vault)renderVault();
+    });
     $("#btn-bio-login").addEventListener("click",bioUnlock);
     $("#pw-prompt-ok").addEventListener("click",()=>closePrompt($("#pw-prompt-input").value));
     $("#pw-prompt-cancel").addEventListener("click",()=>closePrompt(null));
