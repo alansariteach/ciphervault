@@ -3,7 +3,7 @@
   const translations = {
     ar: {
       languageLabel: 'EN', languageAction: 'Switch to English', languageMenu: 'التحويل الى الانجليزية', menuOpen: 'فتح القائمة', menuClose: 'إغلاق القائمة',
-      contactTitle: 'تواصل معنا', contactCopy: 'للاستفسارات والدعم، تواصل مباشرة عبر Telegram وInstagram.', personalMark: 'الشعار الشخصي',
+      contactTitle: 'تواصل معنا', contactCopy: 'للاستفسارات والدعم، تواصل مباشرة عبر Telegram أو Instagram أو الإيميل.', personalMark: 'الشعار الشخصي',
       attemptsNotice: 'التشفير محلي على جهازك فقط.', masterPassword: 'كلمة المرور الرئيسية', masterPlaceholder: 'أدخل كلمة المرور الرئيسية', confirmMaster: 'تأكيد كلمة المرور الرئيسية', confirmPlaceholder: 'أعد إدخال كلمة المرور',
       showMaster: 'إظهار كلمة المرور الرئيسية', hideMaster: 'إخفاء كلمة المرور', openVault: 'فتح الخزنة', createVault: 'إنشاء الخزنة', processing: 'جار التشفير…', loadingVault: 'جار تجهيز الخزنة المحلية…', createVaultNote: 'أنشئ كلمة مرور رئيسية من 12 حرفا على الأقل. لا يمكن استعادتها إذا نسيتها.', unlockVaultNote: 'أدخل كلمة المرور الرئيسية لفك خزنتك على هذا الجهاز.',
       securityDescription: 'تظل بياناتك مشفرة محليا على هذا الجهاز. بعد 3 محاولات خاطئة يقفل.', localOnly: 'AES-256 / محلي فقط', attemptsMax: '٣ محاولات كحد أقصى',
@@ -29,7 +29,7 @@
     },
     en: {
       languageLabel: 'ع', languageAction: 'التبديل إلى العربية', languageMenu: 'Switch to Arabic', menuOpen: 'Open menu', menuClose: 'Close menu',
-      contactTitle: 'Contact us', contactCopy: 'For enquiries and support, contact us directly through Telegram and Instagram.', personalMark: 'Personal mark',
+      contactTitle: 'Contact us', contactCopy: 'For enquiries and support, contact us directly via Telegram, Instagram or email.', personalMark: 'Personal mark',
       attemptsNotice: 'Encryption stays local to this device.', masterPassword: 'MASTER PASSWORD', masterPlaceholder: 'Enter the master password', confirmMaster: 'CONFIRM MASTER PASSWORD', confirmPlaceholder: 'Enter the password again',
       showMaster: 'Show master password', hideMaster: 'Hide password', openVault: 'OPEN VAULT', createVault: 'CREATE VAULT', processing: 'ENCRYPTING…', loadingVault: 'Preparing the local vault…', createVaultNote: 'Create a master password with at least 12 characters. It cannot be recovered if forgotten.', unlockVaultNote: 'Enter the master password to decrypt this vault on this device.',
       securityDescription: 'Your data stays encrypted locally on this device. After 3 incorrect attempts, the vault locks.', localOnly: 'AES-256 / LOCAL ONLY', attemptsMax: '03 ATTEMPTS MAX',

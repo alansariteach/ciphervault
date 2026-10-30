@@ -18,14 +18,14 @@ body { width: 100%; overflow-x: hidden; }
 
 @media (max-width: 410px) {
   .site-header { padding-inline: 16px; }
-  .header-alansari, .header-alansari img { width: 92px; height: 38px; }
+  .header-alansari, .header-alansari img { width: auto; height: 24px; }
   .menu-toggle { width: 43px; height: 39px; }
   .access-main { padding-inline: 16px; padding-top: 93px; }
   .access-core h1 { font-size: clamp(32px, 9.8vw, 42px); letter-spacing: 1px; }
   .hero-biohazard { width: 96px; height: 96px; }
   .security-description { font-size: 11px; }
   .vault-header { min-height: 70px; padding-inline: 16px; }
-  .vault-alansari, .vault-alansari img { width: 86px; height: 35px; }
+  .vault-alansari, .vault-alansari img { width: 35px; height: 35px; }
   .vault-identity { font-size: 10px; letter-spacing: .08em; }
   .vault-identity small { font-size: 8px; }
   .vault-menu-toggle { left: 16px; min-width: 44px; min-height: 44px; }
