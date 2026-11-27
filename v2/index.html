@@ -378,6 +378,8 @@ img.header-alansari--h{height:30px!important;width:auto;max-width:56vw;filter:dr
                     <span class="bio-ico"><img src="assets/bio-faceid.png" alt="" /></span><span data-i18n="bioLogin">فتح بالبصمة</span>
                   </button>
 
+                  <button type="button" id="forgot-link" data-i18n="forgotLink" style="background:none;border:none;color:var(--muted);font-family:var(--font);font-size:13px;text-decoration:underline;cursor:pointer;margin-top:14px">نسيت كلمة المرور؟</button>
+
         <div class="attempts hidden" id="attempts">
           <span data-i18n="attemptsLabel">متبقي</span>
           <span class="dots" id="attempt-dots"></span>
@@ -539,7 +541,17 @@ const I18N = {
     footerDate:"تاريخ تصميم الموقع: 2026-10-03",
         footerBy:"صمم بواسطة Alansari.Tech",
         back:"الرجوع",
-    confirmTitle:"تأكيد",
+    confirmTitle:"تأكيد", cancel:"رجوع",
+        forgotLink:"نسيت كلمة المرور؟",
+        forgotTitle:"نسيت كلمة المرور الرئيسية؟",
+        forgotBody:"بياناتك مشفّرة بكلمة مرورك نفسها، فما نقدر نرجّعها لك ولا أحد يقدر — هذا اللي يخلي خزنتك آمنة. لك خيارين: ترجّع بياناتك من نسخة احتياطية عندك، أو تمسح الخزنة وتبدأ من جديد بكلمة مرور جديدة (بتروح كل الحسابات المحفوظة).",
+        forgotRestore:"استعيد من نسخة احتياطية",
+        forgotReset:"امسح الخزنة وابدأ من جديد",
+        resetConfirm:"بينمسح كل اللي محفوظ في الخزنة على هذا الجهاز نهائياً، وما نقدر نرجّعه. متأكد؟",
+        resetDone:"تم مسح الخزنة. سجّل كلمة مرور جديدة.",
+        restoreAsk:"أدخل كلمة المرور الرئيسية الخاصة بالنسخة الاحتياطية.",
+        restoreOk:"تم استرجاع بياناتك. هذي صارت كلمة مرورك الجديدة.",
+        restoreErr:"تعذّر الاسترجاع. تأكد من الملف ومن كلمة المرور.",
         bioLogin:"فتح بالبصمة",
         bioAskPw:"أدخل كلمة المرور الرئيسية لتفعيل البصمة على هذا الجهاز.",
         bioBadPw:"كلمة المرور غير صحيحة.",
@@ -617,7 +629,17 @@ const I18N = {
     footerDate:"Site designed on: 2026-10-03",
         footerBy:"Designed by Alansari.Tech",
         back:"Back",
-    confirmTitle:"Confirm",
+    confirmTitle:"Confirm", cancel:"Back",
+        forgotLink:"Forgot your password?",
+        forgotTitle:"Forgot your master password?",
+        forgotBody:"Your data is encrypted with your own password, so neither we nor anyone else can recover it — that's what keeps your vault safe. You have two options: restore your data from a backup you saved, or wipe the vault and start over with a new password (all saved accounts will be lost).",
+        forgotRestore:"Restore from a backup",
+        forgotReset:"Wipe the vault and start over",
+        resetConfirm:"This permanently erases everything saved in the vault on this device, and it can't be undone. Are you sure?",
+        resetDone:"Vault wiped. Set a new password.",
+        restoreAsk:"Enter the master password of the backup file.",
+        restoreOk:"Your data was restored. This is now your new password.",
+        restoreErr:"Couldn't restore. Check the file and the password.",
         bioLogin:"Unlock with Biometric",
         bioAskPw:"Enter your master password to enable biometric on this device.",
         bioBadPw:"Incorrect password.",
@@ -734,15 +756,16 @@ function isLocked(){
 }
 
 /* ---------------- Setup / Unlock ---------------- */
-async function setupVault(pw){
+async function setupVault(pw,vault){
+  vault=vault||{entries:[]};
   const salt=randBytes(16);
   const key=await deriveKey(pw,salt);
   const verifier=await encrypt(key,SENTINEL);
   const cfg={version:1,salt:bufToB64(salt),iterations:ITER,verifier};
-  const env=await encrypt(key,JSON.stringify({entries:[]}));
+  const env=await encrypt(key,JSON.stringify(vault));
   saveCfg(cfg);
   localStorage.setItem(VAULT_KEY,JSON.stringify(env));
-  state={cfg,vault:{entries:[]},key};
+  state={cfg,vault,key};
   return true;
 }
 async function tryUnlock(pw){
@@ -823,6 +846,60 @@ function confirm(msg){
   });
 }
 
+/* ---------------- Forgot master password ---------------- */
+// Zero-knowledge: a forgotten master password cannot be recovered. The only
+// honest options are to restore from an encrypted backup, or wipe and start over.
+function wipeVaultStorage(){
+  [CFG_KEY,VAULT_KEY,LOCK_KEY,BIO_KEY].forEach(k=>{try{localStorage.removeItem(k);}catch(e){}});
+  state={cfg:null,vault:null,key:null};
+}
+async function resetVault(){
+  if(!await confirm(t("resetConfirm")))return;
+  wipeVaultStorage();
+  toast(t("resetDone"));
+  renderAccess();
+  showScreen("access");
+}
+function restoreFromBackup(){
+  const inp=document.createElement("input");inp.type="file";inp.accept=".json,.cvault.json";
+  inp.onchange=async()=>{
+    const f=inp.files[0];if(!f)return;
+    const pw=await prompt(t("restoreAsk"));
+    if(!pw)return;
+    try{
+      const data=JSON.parse(await f.text());
+      if(!data.env||!data.salt)throw new Error("bad");
+      const key=await deriveKey(pw,b64ToBuf(data.salt));
+      const plain=await decrypt(key,data.env);            // throws on wrong password
+      const vault=JSON.parse(plain);
+      if(!vault||!Array.isArray(vault.entries))throw new Error("bad");
+      // Re-provision the vault; the backup's password becomes the new master password.
+      await setupVault(pw,vault);
+      setLock(null);
+      toast(t("restoreOk"));
+      enterVault();
+    }catch(e){toast(t("restoreErr"),true);}
+  };
+  inp.click();
+}
+function forgotPassword(){
+  const ov=document.createElement("div");ov.className="modal-overlay";
+  ov.innerHTML=`<div class="modal modal--confirm">
+    <div class="modal__head"><h2>${esc(t("forgotTitle"))}</h2></div>
+    <p style="color:var(--muted);font-size:14px;line-height:1.8;margin:6px 0 18px">${esc(t("forgotBody"))}</p>
+    <div class="modal__actions" style="flex-direction:column;gap:10px;align-items:stretch">
+      <button class="btn btn--primary" id="fg-restore">${esc(t("forgotRestore"))}</button>
+      <button class="btn btn--ghost" id="fg-reset" style="color:#ff5a66;border-color:#4a1218">${esc(t("forgotReset"))}</button>
+      <button class="btn btn--ghost" id="fg-cancel">${esc(t("cancel"))}</button>
+    </div></div>`;
+  document.body.appendChild(ov);
+  const done=()=>ov.remove();
+  ov.querySelector("#fg-restore").onclick=()=>{done();restoreFromBackup();};
+  ov.querySelector("#fg-reset").onclick=()=>{done();resetVault();};
+  ov.querySelector("#fg-cancel").onclick=done;
+  ov.addEventListener("click",e=>{if(e.target===ov)done();});
+}
+
 function openDrawer(){$("#drawer").classList.add("open");$("#drawer-overlay").classList.remove("hidden");$("#drawer").setAttribute("aria-hidden","false");}
 function closeDrawer(){$("#drawer").classList.remove("open");$("#drawer-overlay").classList.add("hidden");$("#drawer").setAttribute("aria-hidden","true");}
 
@@ -830,6 +907,8 @@ function closeDrawer(){$("#drawer").classList.remove("open");$("#drawer-overlay"
 function renderAccess(){
   const cfg=loadCfg();
   const creating=!cfg;
+  // "forgot password?" is only meaningful once a vault exists — show it even while locked out
+  $("#forgot-link").classList.toggle("hidden",creating);
   $("#confirm-field").classList.toggle("hidden",!creating);
   $("#access-btn").textContent=creating?t("createBtn"):t("accessBtn");
   $(".product-desc").textContent=creating?t("createDesc"):t("accessDesc");
@@ -1313,6 +1392,7 @@ function bind(){
       if(state.vault)renderVault();
     });
     $("#btn-bio-login").addEventListener("click",bioUnlock);
+    $("#forgot-link").addEventListener("click",forgotPassword);
     $("#pw-prompt-ok").addEventListener("click",()=>closePrompt($("#pw-prompt-input").value));
     $("#pw-prompt-cancel").addEventListener("click",()=>closePrompt(null));
     $("#pw-prompt-cancel2").addEventListener("click",()=>closePrompt(null));
