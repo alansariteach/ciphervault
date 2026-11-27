@@ -476,6 +476,7 @@ img.header-alansari--h{height:30px!important;width:auto;max-width:56vw;filter:dr
       <button class="drawer__item" data-nav="check" data-i18n="checkPw">فحص كلمة المرور</button>
       <button class="drawer__item" data-nav="import" data-i18n="import">استيراد نسخة مشفرة</button>
       <button class="drawer__item" data-nav="export" data-i18n="export">تصدير نسخة مشفرة</button>
+      <button class="drawer__item" data-nav="recovery" data-i18n="recoveryKey">مفتاح الاسترجاع (إنشاء جديد)</button>
       <button class="drawer__item" data-nav="biometric" data-i18n="biometric">تفعيل البصمة لهذا الجهاز</button>
       <button class="drawer__item" data-nav="install" data-i18n="install">تثبيت التطبيق</button>
       <div class="drawer__sep"></div>
@@ -544,8 +545,22 @@ const I18N = {
         forgotLink:"نسيت كلمة المرور؟",
         forgotTitle:"نسيت كلمة المرور الرئيسية؟",
         forgotBody:"بياناتك مشفّرة بكلمة مرورك نفسها، فما نقدر نرجّعها لك ولا أحد يقدر — هذا اللي يخلي خزنتك آمنة. لك خيارين: ترجّع بياناتك من نسخة احتياطية عندك، أو تمسح الخزنة وتبدأ من جديد بكلمة مرور جديدة (بتروح كل الحسابات المحفوظة).",
+        forgotUseCode:"عندي مفتاح استرجاع",
         forgotRestore:"استعيد من نسخة احتياطية",
         forgotReset:"امسح الخزنة وابدأ من جديد",
+        recoveryKey:"مفتاح الاسترجاع (إنشاء جديد)",
+        recTitle:"مفتاح الاسترجاع",
+        recIntro:"احفظ هذا المفتاح في مكان آمن. يفتح خزنتك لو نسيت كلمة المرور. ما نقدر نرجّعه لك لو ضيّعته.",
+        recIntroNew:"هذا مفتاح الاسترجاع الخاص بخزنتك. احفظه بمكان آمن الحين — لو نسيت كلمة المرور، هذا طريقك الوحيد لحساباتك، وما نقدر نرجّعه لك لو ضيّعته.",
+        recIntroMigrate:"حدّثنا حماية خزنتك وصار لك مفتاح استرجاع. احفظه بمكان آمن — يرجّع لك حساباتك لو نسيت كلمة المرور.",
+        recCopy:"نسخ", recDownload:"تنزيل ملف", recSaved:"حفظته ✓",
+        recFile:"مفتاح الاسترجاع الخاص بـ CipherVault — احتفظ به بمكان آمن ولا تشاركه مع أحد.",
+        recAsk:"أدخل مفتاح الاسترجاع.",
+        recNewPw:"أدخل كلمة مرور رئيسية جديدة (12 حرف على الأقل).",
+        recOk:"تم فتح خزنتك. حطّينا كلمة مرورك الجديدة.",
+        recBad:"مفتاح الاسترجاع غير صحيح.",
+        recNone:"ما فيه مفتاح استرجاع لهذه الخزنة.",
+        copied:"تم النسخ.",
         resetConfirm:"بينمسح كل اللي محفوظ في الخزنة على هذا الجهاز نهائياً، وما نقدر نرجّعه. متأكد؟",
         resetDone:"تم مسح الخزنة. سجّل كلمة مرور جديدة.",
         restoreAsk:"أدخل كلمة المرور الرئيسية الخاصة بالنسخة الاحتياطية.",
@@ -632,8 +647,22 @@ const I18N = {
         forgotLink:"Forgot your password?",
         forgotTitle:"Forgot your master password?",
         forgotBody:"Your data is encrypted with your own password, so neither we nor anyone else can recover it — that's what keeps your vault safe. You have two options: restore your data from a backup you saved, or wipe the vault and start over with a new password (all saved accounts will be lost).",
+        forgotUseCode:"I have a recovery key",
         forgotRestore:"Restore from a backup",
         forgotReset:"Wipe the vault and start over",
+        recoveryKey:"Recovery key (generate new)",
+        recTitle:"Recovery key",
+        recIntro:"Save this key somewhere safe. It unlocks your vault if you forget your password. We can't recover it for you if it's lost.",
+        recIntroNew:"This is your vault's recovery key. Save it somewhere safe now — if you forget your password, it's your only way back to your accounts, and we can't recover it for you if it's lost.",
+        recIntroMigrate:"We upgraded your vault's protection and it now has a recovery key. Save it somewhere safe — it restores your accounts if you forget your password.",
+        recCopy:"Copy", recDownload:"Download file", recSaved:"I saved it ✓",
+        recFile:"Your CipherVault recovery key — keep it somewhere safe and never share it.",
+        recAsk:"Enter your recovery key.",
+        recNewPw:"Enter a new master password (at least 12 characters).",
+        recOk:"Your vault is unlocked. Your new password is set.",
+        recBad:"Incorrect recovery key.",
+        recNone:"This vault has no recovery key.",
+        copied:"Copied.",
         resetConfirm:"This permanently erases everything saved in the vault on this device, and it can't be undone. Are you sure?",
         resetDone:"Vault wiped. Set a new password.",
         restoreAsk:"Enter the master password of the backup file.",
@@ -754,39 +783,104 @@ function isLocked(){
   return true;
 }
 
-/* ---------------- Setup / Unlock ---------------- */
-async function setupVault(pw,vault){
-  vault=vault||{entries:[]};
+/* ---------------- Setup / Unlock ----------------
+   Envelope model (cfg.version 2): a random Data Encryption Key (DEK) encrypts the
+   vault. The DEK is wrapped twice — once by the master-password key, once by a
+   recovery-key derived from a one-time recovery code shown to the user at setup.
+   Either can unwrap the DEK, so a forgotten password is recoverable with the code,
+   while the vault stays zero-knowledge (the code itself is never stored). */
+function importRawKey(buf){return crypto.subtle.importKey("raw",buf,"AES-GCM",false,["encrypt","decrypt"]);}
+function genRecoveryCode(){
+  const b=new Uint8Array(randBytes(20));let h="";
+  for(let i=0;i<b.length;i++)h+=b[i].toString(16).padStart(2,"0").toUpperCase();
+  return h.match(/.{1,5}/g).join("-"); // e.g. A1B2C-D3E4F-...
+}
+function normCode(s){return (s||"").replace(/[^0-9A-Za-z]/g,"").toUpperCase();}
+async function buildCfgV2(pw,dek,recoveryCode){
   const salt=randBytes(16);
   const key=await deriveKey(pw,salt);
   const verifier=await encrypt(key,SENTINEL);
-  const cfg={version:1,salt:bufToB64(salt),iterations:ITER,verifier};
-  const env=await encrypt(key,JSON.stringify(vault));
+  const wrapPw=await encrypt(key,bufToB64(dek));
+  const recSalt=randBytes(16);
+  const recKey=await deriveKey(normCode(recoveryCode),recSalt);
+  const wrapRec=await encrypt(recKey,bufToB64(dek));
+  return {version:2,salt:bufToB64(salt),iterations:ITER,verifier,wrapPw,recSalt:bufToB64(recSalt),wrapRec};
+}
+async function setupVault(pw,vault){
+  vault=vault||{entries:[]};
+  const dek=randBytes(32);
+  const recoveryCode=genRecoveryCode();
+  const cfg=await buildCfgV2(pw,dek,recoveryCode);
+  const env=await encrypt(await importRawKey(dek),JSON.stringify(vault));
   saveCfg(cfg);
   localStorage.setItem(VAULT_KEY,JSON.stringify(env));
-  state={cfg,vault,key};
-  return true;
+  state={cfg,vault,key:await deriveKey(pw,b64ToBuf(cfg.salt)),dek};
+  return {recoveryCode};
 }
-async function tryUnlock(pw){
+async function readVaultWith(dk){
+  const raw=localStorage.getItem(VAULT_KEY);let vault={entries:[]};
+  if(raw){try{vault=JSON.parse(await decrypt(dk,JSON.parse(raw)));}catch(e){vault={entries:[]};}
+    if(!vault||!Array.isArray(vault.entries))vault={entries:[]};}
+  return vault;
+}
+async function tryUnlock(pw,migrate){
   const cfg=loadCfg();
   if(!cfg)return {ok:false,code:"nocfg"};
   const key=await deriveKey(pw,b64ToBuf(cfg.salt));
   let sentinel;
   try{sentinel=await decrypt(key,cfg.verifier);}catch(e){return {ok:false,code:"wrong"};}
   if(sentinel!==SENTINEL)return {ok:false,code:"wrong"};
-  const raw=localStorage.getItem(VAULT_KEY);
-  let vault={entries:[]};
-  if(raw){
-    try{vault=JSON.parse(await decrypt(key,JSON.parse(raw)));}catch(e){vault={entries:[]};}
-    if(!vault||!Array.isArray(vault.entries))vault={entries:[]};
+  if(cfg.version>=2){
+    let dek;
+    try{dek=b64ToBuf(await decrypt(key,cfg.wrapPw));}catch(e){return {ok:false,code:"wrong"};}
+    const vault=await readVaultWith(await importRawKey(dek));
+    state={cfg,vault,key,dek};
+    return {ok:true};
   }
-  state={cfg,vault,key};
-  return {ok:true};
+  // ---- legacy v1: vault is encrypted directly with the password key ----
+  const vault=await readVaultWith(key);
+  if(!migrate){state={cfg,vault,key,dek:null};return {ok:true};}
+  // migrate v1 -> v2 (adds a recovery key) on first interactive unlock
+  const dek=randBytes(32);const recoveryCode=genRecoveryCode();
+  const ncfg=await buildCfgV2(pw,dek,recoveryCode);
+  localStorage.setItem(VAULT_KEY,JSON.stringify(await encrypt(await importRawKey(dek),JSON.stringify(vault))));
+  saveCfg(ncfg);
+  state={cfg:ncfg,vault,key:await deriveKey(pw,b64ToBuf(ncfg.salt)),dek};
+  return {ok:true,migratedRecovery:recoveryCode};
 }
 async function persistVault(){
-  if(!state.key)return;
-  const env=await encrypt(state.key,JSON.stringify(state.vault));
-  localStorage.setItem(VAULT_KEY,JSON.stringify(env));
+  const raw=JSON.stringify(state.vault);
+  if(state.dek){localStorage.setItem(VAULT_KEY,JSON.stringify(await encrypt(await importRawKey(state.dek),raw)));}
+  else if(state.key){localStorage.setItem(VAULT_KEY,JSON.stringify(await encrypt(state.key,raw)));}
+}
+// Recover with the one-time code: unwrap the DEK, set a NEW master password, keep the same recovery code.
+async function recoverWithCode(code,newPw){
+  const cfg=loadCfg();
+  if(!cfg||cfg.version<2||!cfg.wrapRec)return {ok:false,code:"norec"};
+  const recKey=await deriveKey(normCode(code),b64ToBuf(cfg.recSalt));
+  let dek;
+  try{dek=b64ToBuf(await decrypt(recKey,cfg.wrapRec));}catch(e){return {ok:false,code:"badcode"};}
+  const salt=randBytes(16);const key=await deriveKey(newPw,salt);
+  cfg.salt=bufToB64(salt);
+  cfg.verifier=await encrypt(key,SENTINEL);
+  cfg.wrapPw=await encrypt(key,bufToB64(dek));
+  saveCfg(cfg);
+  const vault=await readVaultWith(await importRawKey(dek));
+  state={cfg,vault,key,dek};
+  setLock(null);
+  return {ok:true};
+}
+// Issue a fresh recovery code while unlocked (invalidates the old one).
+async function regenerateRecovery(){
+  if(!state.dek)return null;
+  const recoveryCode=genRecoveryCode();
+  const cfg=loadCfg();
+  const recSalt=randBytes(16);
+  const recKey=await deriveKey(normCode(recoveryCode),recSalt);
+  cfg.recSalt=bufToB64(recSalt);
+  cfg.wrapRec=await encrypt(recKey,bufToB64(state.dek));
+  saveCfg(cfg);state.cfg=cfg;
+  return recoveryCode;
 }
 
 /* ---------------- UI helpers ---------------- */
@@ -887,16 +981,55 @@ function forgotPassword(){
     <div class="modal__head"><h2>${esc(t("forgotTitle"))}</h2></div>
     <p style="color:var(--muted);font-size:14px;line-height:1.8;margin:6px 0 18px">${esc(t("forgotBody"))}</p>
     <div class="modal__actions" style="flex-direction:column;gap:10px;align-items:stretch">
-      <button class="btn btn--primary" id="fg-restore">${esc(t("forgotRestore"))}</button>
+      <button class="btn btn--primary" id="fg-code">${esc(t("forgotUseCode"))}</button>
+      <button class="btn btn--ghost" id="fg-restore">${esc(t("forgotRestore"))}</button>
       <button class="btn btn--ghost" id="fg-reset" style="color:#ff5a66;border-color:#4a1218">${esc(t("forgotReset"))}</button>
       <button class="btn btn--ghost" id="fg-cancel">${esc(t("cancel"))}</button>
     </div></div>`;
   document.body.appendChild(ov);
   const done=()=>ov.remove();
+  ov.querySelector("#fg-code").onclick=()=>{done();recoverWithCodeFlow();};
   ov.querySelector("#fg-restore").onclick=()=>{done();restoreFromBackup();};
   ov.querySelector("#fg-reset").onclick=()=>{done();resetVault();};
   ov.querySelector("#fg-cancel").onclick=done;
   ov.addEventListener("click",e=>{if(e.target===ov)done();});
+}
+// One-time recovery code shown at setup / migration / regeneration. Not recoverable later.
+function showRecoveryKey(code,intro){
+  return new Promise(res=>{
+    const ov=document.createElement("div");ov.className="modal-overlay";
+    ov.innerHTML=`<div class="modal modal--confirm">
+      <div class="modal__head"><h2>${esc(t("recTitle"))}</h2></div>
+      <p style="color:var(--muted);font-size:14px;line-height:1.8;margin:6px 0 14px">${esc(intro||t("recIntro"))}</p>
+      <div style="font-family:var(--font,monospace);font-size:18px;letter-spacing:1px;text-align:center;background:#0b0b0d;border:2px dashed #3a3a40;border-radius:14px;padding:18px;color:#fff;word-break:break-all;direction:ltr">${esc(code)}</div>
+      <div class="modal__actions" style="margin-top:14px;gap:10px">
+        <button class="btn btn--ghost" id="rk-copy">${esc(t("recCopy"))}</button>
+        <button class="btn btn--ghost" id="rk-dl">${esc(t("recDownload"))}</button>
+      </div>
+      <div class="modal__actions" style="margin-top:8px">
+        <button class="btn btn--primary" id="rk-ok">${esc(t("recSaved"))}</button>
+      </div></div>`;
+    document.body.appendChild(ov);
+    ov.querySelector("#rk-copy").onclick=()=>{navigator.clipboard&&navigator.clipboard.writeText(code);toast(t("copied"));};
+    ov.querySelector("#rk-dl").onclick=()=>{const b=new Blob([t("recFile")+"\n\n"+code],{type:"text/plain"});
+      const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="ciphervault-recovery-key.txt";a.click();URL.revokeObjectURL(a.href);};
+    ov.querySelector("#rk-ok").onclick=()=>{ov.remove();res();};
+  });
+}
+async function recoverWithCodeFlow(){
+  const cfg=loadCfg();
+  if(!cfg||cfg.version<2){toast(t("recNone"),true);return;}
+  const code=await prompt(t("recAsk"));
+  if(!code)return;
+  const np=await prompt(t("recNewPw"));
+  if(!np)return;
+  if(np.length<12){toast(t("pwShort"),true);return;}
+  showLoading(t("opening"));
+  const res=await recoverWithCode(code,np);
+  hideLoading();
+  if(res.ok){toast(t("recOk"));enterVault();}
+  else if(res.code==="badcode")toast(t("recBad"),true);
+  else toast(t("recNone"),true);
 }
 
 function openDrawer(){$("#drawer").classList.add("open");$("#drawer-overlay").classList.remove("hidden");$("#drawer").setAttribute("aria-hidden","false");}
@@ -952,14 +1085,14 @@ async function handleAccess(e){
     if(pw.length<12){toast(t("pwShort"),true);return;}
     if(pw!==cf){toast(t("pwMismatch"),true);return;}
     showLoading(t("creating"));
-    try{await setupVault(pw);hideLoading();enterVault();}
+    try{const r=await setupVault(pw);hideLoading();enterVault();await showRecoveryKey(r.recoveryCode,t("recIntroNew"));}
     catch(err){hideLoading();toast(t("createFailed")+(err&&err.message?": "+err.message:""),true);}
     return;
   }
   showLoading(t("opening"));
-    const res=await tryUnlock(pw);
+    const res=await tryUnlock(pw,true);
     hideLoading();
-    if(res.ok){setLock(null);enterVault();}
+    if(res.ok){setLock(null);enterVault();if(res.migratedRecovery)await showRecoveryKey(res.migratedRecovery,t("recIntroMigrate"));}
     else{
           let l=getLock()||{attempts:0};
           // reset the counter if it's a legacy entry (no ts) or enough idle passed
@@ -1401,6 +1534,7 @@ function bind(){
     if(n==="add"){openAdd();return;}
     if(n==="import"){doImport();return;}
     if(n==="export"){doExport();return;}
+    if(n==="recovery"){(async()=>{const c=await regenerateRecovery();if(c)await showRecoveryKey(c,t("recIntroNew"));else toast(t("recNone"),true);})();return;}
     if(n==="biometric"){doBiometric();return;}
     if(n==="install"){doInstall();return;}
     showScreen(n);
