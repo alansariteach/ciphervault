@@ -477,7 +477,6 @@ img.header-alansari--h{height:30px!important;width:auto;max-width:56vw;filter:dr
       <button class="drawer__item" data-nav="import" data-i18n="import">استيراد نسخة مشفرة</button>
       <button class="drawer__item" data-nav="export" data-i18n="export">تصدير نسخة مشفرة</button>
       <button class="drawer__item" data-nav="biometric" data-i18n="biometric">تفعيل البصمة لهذا الجهاز</button>
-      <button class="drawer__item" id="btn-fav-toggle" data-i18n="favicons">عرض أيقونات المواقع (يرسل النطاقات لجوجل)</button>
       <button class="drawer__item" data-nav="install" data-i18n="install">تثبيت التطبيق</button>
       <div class="drawer__sep"></div>
       <a class="drawer__item" href="https://t.me/Alansaritech" target="_blank" rel="noopener noreferrer"><span class="di-ico">✈</span>Telegram</a>
@@ -1384,13 +1383,6 @@ function bind(){
   $("#drawer-overlay").addEventListener("click",closeDrawer);
   $("#btn-lang").addEventListener("click",()=>{lang=lang==="ar"?"en":"ar";applyLang();renderAccess();if(!state.vault)return;renderVault();});
   $("#btn-lock").addEventListener("click",lockVault);
-    $("#btn-fav-toggle").addEventListener("click",()=>{
-      const on=!faviconsEnabled();
-      try{localStorage.setItem(FAV_KEY,on?"1":"0");}catch(e){}
-      toast(t(on?"favOn":"favOff"));
-      closeDrawer();
-      if(state.vault)renderVault();
-    });
     $("#btn-bio-login").addEventListener("click",bioUnlock);
     $("#forgot-link").addEventListener("click",forgotPassword);
     $("#pw-prompt-ok").addEventListener("click",()=>closePrompt($("#pw-prompt-input").value));
